@@ -6,6 +6,8 @@ export default function Panel({ modulos }) {
     const navegacion = modulos.map((modulo) => ({
         label: modulo.nombre,
         href: modulo.url,
+        target: '_blank',
+        rel: 'noopener noreferrer',
     }));
 
     return (
@@ -29,6 +31,8 @@ export default function Panel({ modulos }) {
                             <Link
                                 key={modulo.nombre}
                                 href={modulo.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="group flex min-h-28 items-center border border-slate-300 bg-white px-5 py-4 shadow-sm transition hover:border-emerald-600 hover:bg-emerald-50"
                             >
                                 <span className="min-w-0 flex-1">

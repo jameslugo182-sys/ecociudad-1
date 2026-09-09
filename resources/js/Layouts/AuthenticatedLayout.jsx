@@ -1,16 +1,10 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
+import { broadcastLogout } from '@/sessionSync';
 import { Link, usePage } from '@inertiajs/react';
 
-const nombresRol = {
-    administrador: 'Administrador',
-    ciudadano: 'Ciudadano',
-    personal_municipal: 'Personal municipal',
-    area_limpieza: 'Área de limpieza',
-};
-
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const { user, roleName } = usePage().props.auth;
 
     return (
         <div className="min-h-screen bg-slate-100">
@@ -52,7 +46,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                             {user.name}
                                         </span>
                                         <span className="block text-[10px] font-medium text-emerald-700">
-                                            {nombresRol[user.rol] || user.rol}
+                                            {roleName}
                                         </span>
                                     </span>
                                     <span className="text-xs text-slate-400">⌄</span>
@@ -70,6 +64,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                     href={route('logout')}
                                     method="post"
                                     as="button"
+                                    onSuccess={broadcastLogout}
                                 >
                                     Cerrar sesión
                                 </Dropdown.Link>

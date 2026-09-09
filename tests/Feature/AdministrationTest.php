@@ -28,6 +28,13 @@ class AdministrationTest extends TestCase
                 ->component('Panel')
                 ->has('modulos', 5));
 
+        $this->actingAs($administrador)
+            ->get(route('administracion.incidencias.mapa'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Admin/Mapa')
+                ->where('routeNames.mapa', 'administracion.incidencias.mapa'));
+
         $this->actingAs($municipal)
             ->get(route('administracion.dashboard'))
             ->assertForbidden();

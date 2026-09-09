@@ -12,6 +12,10 @@ export default {
 
     theme: {
         extend: {
+            borderRadius: {
+                '2xl': '0.75rem',
+                '3xl': '0.75rem',
+            },
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },

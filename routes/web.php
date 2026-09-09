@@ -49,6 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::middleware('module:incidencias')->group(function () {
                 Route::get('/incidencias', [AdminController::class, 'dashboard'])->name('incidencias.index');
+                Route::get('/incidencias/mapa', [MapaController::class, 'index'])->name('incidencias.mapa');
                 Route::patch('/incidencias/{reporte}/estado', [AdminController::class, 'actualizarEstado'])
                     ->name('incidencias.estado');
                 Route::patch('/incidencias/{reporte}/asignar', [AdminController::class, 'asignar'])

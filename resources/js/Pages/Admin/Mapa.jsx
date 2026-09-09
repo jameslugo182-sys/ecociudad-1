@@ -27,10 +27,10 @@ function AjustarLimites({ reportes }) {
     return null;
 }
 
-export default function Mapa({ reportes }) {
+export default function Mapa({ reportes, routeNames }) {
     const navegacion = [
-        { label: 'Listado de incidencias', href: route('admin.reportes.index'), active: 'admin.reportes.index', icon: '01' },
-        { label: 'Mapa de incidencias', href: route('admin.mapa'), active: 'admin.mapa', icon: '02' },
+        { label: 'Listado de incidencias', href: route(routeNames.index), active: routeNames.index },
+        { label: 'Mapa de incidencias', href: route(routeNames.mapa), active: routeNames.mapa },
     ];
 
     return (
@@ -40,16 +40,16 @@ export default function Mapa({ reportes }) {
             <div className="min-h-screen bg-slate-50 py-8">
                 <div className="mx-auto max-w-7xl space-y-4 px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between gap-4">
-                    <div>
-                        <p className="text-sm font-semibold text-emerald-700">Monitoreo territorial</p>
-                        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">Mapa de incidencias</h2>
-                    </div>
-                    <Link
-                        href={route('admin.dashboard')}
-                        className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                    >
-                        Ver listado
-                    </Link>
+                        <div>
+                            <p className="text-sm font-semibold text-emerald-700">Monitoreo territorial</p>
+                            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">Mapa de incidencias</h2>
+                        </div>
+                        <Link
+                            href={route(routeNames.index)}
+                            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                            Ver listado
+                        </Link>
                     </div>
                     <div className="flex flex-wrap gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                         {Object.entries(colores).map(([estado, color]) => (

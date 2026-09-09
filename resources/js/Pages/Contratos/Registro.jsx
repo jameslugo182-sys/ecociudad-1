@@ -1,4 +1,5 @@
 import FlashMessage from '@/Components/FlashMessage';
+import Modal from '@/Components/Modal';
 import ModuleLayout from '@/Layouts/ModuleLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
@@ -80,7 +81,6 @@ export default function Registro({ contratos, cargos, tipos, estados, filters })
             archivo_contrato: null,
         });
         setMostrarFormulario(true);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const guardar = (event) => {
@@ -130,9 +130,14 @@ export default function Registro({ contratos, cargos, tipos, estados, filters })
 
                     <FlashMessage />
 
-                    {mostrarFormulario && (
-                        <form onSubmit={guardar} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
+                    <Modal
+                        show={mostrarFormulario}
+                        maxWidth="7xl"
+                        closeable={!form.processing}
+                        onClose={cerrarFormulario}
+                    >
+                        <form onSubmit={guardar} className="max-h-[calc(100vh-3rem)] overflow-y-auto bg-white">
+                            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
                                 <div>
                                     <h3 className="font-bold text-slate-900">{editando ? 'Editar contrato' : 'Nuevo contrato'}</h3>
                                     <p className="text-xs text-slate-500">Los campos con * son obligatorios.</p>
@@ -271,7 +276,7 @@ export default function Registro({ contratos, cargos, tipos, estados, filters })
                                 </div>
                             </div>
                         </form>
-                    )}
+                    </Modal>
 
                     <form onSubmit={buscar} className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[1fr_220px_180px_auto]">
                         <input

@@ -1,8 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Identidad visual institucional: superficies rectas, sin esquinas suaves. */
-:where([class~='rounded'], [class*='rounded-']):not(.rounded-full) {
-    border-radius: 0 !important;
-}

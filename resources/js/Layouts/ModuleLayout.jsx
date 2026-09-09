@@ -1,5 +1,6 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
+import { broadcastLogout } from '@/sessionSync';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -88,6 +89,8 @@ export default function ModuleLayout({ moduleName, items, children }) {
                             <Link
                                 key={item.label}
                                 href={item.href}
+                                target={item.target}
+                                rel={item.rel}
                                 className={`flex shrink-0 items-center px-3 py-3 text-sm font-medium transition ${
                                     active
                                         ? 'bg-emerald-600 text-white'
@@ -109,7 +112,7 @@ export default function ModuleLayout({ moduleName, items, children }) {
                                 </span>
                                 <span className="min-w-0 flex-1">
                                     <span className="block truncate text-sm font-semibold">{auth.user.name}</span>
-                                    <span className="block truncate text-[10px] text-slate-400">{auth.user.email}</span>
+                                    <span className="block truncate text-[10px] text-emerald-400">{auth.roleName}</span>
                                 </span>
                                 <span className="text-slate-500">⌃</span>
                             </button>
@@ -117,7 +120,12 @@ export default function ModuleLayout({ moduleName, items, children }) {
                         <Dropdown.Content align="left" width="48" direction="up">
                             <Dropdown.Link href={route('dashboard')}>Panel de módulos</Dropdown.Link>
                             <Dropdown.Link href={route('profile.edit')}>Mi perfil</Dropdown.Link>
-                            <Dropdown.Link href={route('logout')} method="post" as="button">
+                            <Dropdown.Link
+                                href={route('logout')}
+                                method="post"
+                                as="button"
+                                onSuccess={broadcastLogout}
+                            >
                                 Cerrar sesión
                             </Dropdown.Link>
                         </Dropdown.Content>

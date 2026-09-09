@@ -70,7 +70,7 @@ class AdminController extends Controller
             'estados' => self::ESTADOS,
             'routeNames' => [
                 'index' => $esAdministracion ? 'administracion.incidencias.index' : 'admin.reportes.index',
-                'mapa' => $esAdministracion ? 'administracion.rutas.index' : 'admin.rutas.index',
+                'mapa' => $esAdministracion ? 'administracion.incidencias.mapa' : 'admin.mapa',
                 'estado' => $esAdministracion ? 'administracion.incidencias.estado' : 'admin.reportes.estado',
                 'asignar' => $esAdministracion ? 'administracion.incidencias.asignar' : 'admin.reportes.asignar',
             ],

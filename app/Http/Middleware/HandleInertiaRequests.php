@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\RolSistema;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -33,6 +34,13 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
+                'roleName' => fn () => match ($request->user()?->rol) {
+                    'administrador' => 'Administrador',
+                    'ciudadano' => 'Ciudadano',
+                    null => null,
+                    default => RolSistema::where('codigo', $request->user()->rol)->value('nombre')
+                        ?? str($request->user()->rol)->replace('_', ' ')->title()->toString(),
+                },
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
