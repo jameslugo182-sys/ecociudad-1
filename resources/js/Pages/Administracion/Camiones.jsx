@@ -1,0 +1,115 @@
+import CamionAdminCard from '@/Components/CamionAdminCard';
+import FlashMessage from '@/Components/FlashMessage';
+import ModuleLayout from '@/Layouts/ModuleLayout';
+import { Head, useForm } from '@inertiajs/react';
+
+export default function Camiones({ camiones, personalLimpieza, estados }) {
+    const navegacion = [
+        { label: 'Registro de vehículos', href: route('administracion.vehiculos.index'), active: 'administracion.vehiculos.index', icon: '01' },
+        { label: 'Equipos operativos', href: `${route('administracion.vehiculos.index')}#equipos`, hash: '#equipos', icon: '02' },
+    ];
+    const form = useForm({
+        codigo: '',
+        placa: '',
+        marca: '',
+        modelo: '',
+        anio: '',
+        capacidad_kg: '',
+        estado: 'Disponible',
+    });
+
+    const crear = (event) => {
+        event.preventDefault();
+        form.post(route('administracion.vehiculos.store'), {
+            preserveScroll: true,
+            onSuccess: () => form.reset(),
+        });
+    };
+
+    return (
+        <ModuleLayout moduleName="Vehículos" items={navegacion}>
+            <Head title="Vehículos" />
+
+            <div className="min-h-screen bg-slate-50 py-8">
+                <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+                    <div>
+                        <p className="text-sm font-semibold text-emerald-700">Flota municipal</p>
+                        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">Vehículos y equipos</h2>
+                    </div>
+                    <FlashMessage />
+
+                    <form id="registro" onSubmit={crear} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <div className="mb-5">
+                            <h2 className="text-lg font-bold text-slate-900">Registrar vehículo</h2>
+                            <p className="text-sm text-slate-500">Añade una unidad a la flota municipal.</p>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            {[
+                                ['codigo', 'Código interno', 'text'],
+                                ['placa', 'Placa', 'text'],
+                                ['marca', 'Marca', 'text'],
+                                ['modelo', 'Modelo', 'text'],
+                                ['anio', 'Año', 'number'],
+                                ['capacidad_kg', 'Capacidad en kg', 'number'],
+                            ].map(([campo, placeholder, tipo]) => (
+                                <input
+                                    key={campo}
+                                    type={tipo}
+                                    value={form.data[campo]}
+                                    onChange={(event) => form.setData(campo, event.target.value)}
+                                    placeholder={placeholder}
+                                    required={['codigo', 'placa'].includes(campo)}
+                                    className="rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                />
+                            ))}
+                            <select
+                                value={form.data.estado}
+                                onChange={(event) => form.setData('estado', event.target.value)}
+                                className="rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            >
+                                {estados.map((estado) => <option key={estado}>{estado}</option>)}
+                            </select>
+                            <button
+                                type="submit"
+                                disabled={form.processing}
+                                className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                            >
+                                Registrar vehículo
+                            </button>
+                        </div>
+                        {Object.values(form.errors).map((error) => (
+                            <p key={error} className="mt-2 text-xs font-medium text-red-600">{error}</p>
+                        ))}
+                    </form>
+
+                    <div id="equipos" className="flex scroll-mt-6 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-900">Vehículos registrados</h2>
+                            <p className="text-sm text-slate-500">{camiones.length} unidades en la flota</p>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                            Personal de limpieza disponible: {personalLimpieza.filter((persona) => !persona.camiones?.length).length}
+                        </p>
+                    </div>
+
+                    {camiones.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-14 text-center text-sm text-slate-500">
+                            Aún no hay camiones registrados.
+                        </div>
+                    ) : (
+                        <div className="grid gap-5">
+                            {camiones.map((camion) => (
+                                <CamionAdminCard
+                                    key={camion.id}
+                                    camion={camion}
+                                    personalLimpieza={personalLimpieza}
+                                    estados={estados}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </ModuleLayout>
+    );
+}
