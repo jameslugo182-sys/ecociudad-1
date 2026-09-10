@@ -55,6 +55,7 @@ class ReporteController extends Controller
 
         return redirect()
             ->route('reportes.index')
-            ->with('success', 'Tu reporte fue enviado a la Municipalidad.');
+            ->with('success', 'Tu reporte fue enviado a la Municipalidad.')
+            ->with('registered', true);
     }
 }

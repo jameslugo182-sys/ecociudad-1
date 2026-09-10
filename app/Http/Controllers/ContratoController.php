@@ -79,7 +79,9 @@ class ContratoController extends Controller
             ]);
         });
 
-        return back()->with('success', 'Contrato registrado correctamente.');
+        return back()
+            ->with('success', 'Contrato registrado correctamente.')
+            ->with('registered', true);
     }
 
     public function update(Request $request, Contrato $contrato): RedirectResponse

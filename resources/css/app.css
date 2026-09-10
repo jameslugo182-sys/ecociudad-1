@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.ruta-parada-icono.leaflet-div-icon {
+    background: transparent;
+    border: none;
+}

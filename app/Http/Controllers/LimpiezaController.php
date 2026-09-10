@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reporte;
+use App\Models\RutaRecoleccion;
 use App\Notifications\ReporteAtendido;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,6 +32,7 @@ class LimpiezaController extends Controller
 
         return Inertia::render('Limpieza/Dashboard', [
             'reportes' => $reportes,
+            'rutaAsignada' => $this->rutaAsignada($request),
             'resumen' => [
                 'pendientes' => $reportes->whereIn('estado', ['Asignado', 'En atención'])->count(),
                 'atendidos' => $reportes->where('estado', 'Atendido')->count(),
@@ -39,6 +41,13 @@ class LimpiezaController extends Controller
                     ->whereNotNull('ruta_orden')
                     ->count(),
             ],
+        ]);
+    }
+
+    public function recorrido(Request $request): Response
+    {
+        return Inertia::render('Limpieza/Recorrido', [
+            'rutaAsignada' => $this->rutaAsignada($request),
         ]);
     }
 
@@ -99,5 +108,24 @@ class LimpiezaController extends Controller
             ->exists();
 
         abort_unless($reporte->assigned_to === $request->user()->id || $perteneceAlEquipo, 403);
+    }
+
+    private function rutaAsignada(Request $request): ?RutaRecoleccion
+    {
+        $ruta = RutaRecoleccion::query()
+            ->whereIn('estado', ['Planificada', 'En curso'])
+            ->whereHas(
+                'camion.personal',
+                fn ($query) => $query->where('users.id', $request->user()->id)
+            )
+            ->with([
+                'camion.personal' => fn ($query) => $query->select('users.id', 'name'),
+                'reportes.user:id,name',
+            ])
+            ->latest('fecha')
+            ->latest()
+            ->first();
+
+        return $ruta?->completarTrazadoVial();
     }
 }

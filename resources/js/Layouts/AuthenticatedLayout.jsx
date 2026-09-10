@@ -1,5 +1,6 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
+import SuccessDialog from '@/Components/SuccessDialog';
 import { broadcastLogout } from '@/sessionSync';
 import { Link, usePage } from '@inertiajs/react';
 
@@ -83,6 +84,7 @@ export default function AuthenticatedLayout({ header, children }) {
             )}
 
             <main>{children}</main>
+            <SuccessDialog />
         </div>
     );
 }

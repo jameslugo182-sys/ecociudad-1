@@ -1,4 +1,6 @@
 import FlashMessage from '@/Components/FlashMessage';
+import { navegacionRutas } from '@/horarioRuta';
+import { BASE_MUNICIPAL, posicionesDeRuta } from '@/rutaMapa';
 import ModuleLayout from '@/Layouts/ModuleLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useEffect } from 'react';
@@ -25,11 +27,6 @@ function AjustarMapa({ puntos }) {
 }
 
 export default function Index({ reportes, equipos, rutas, routeNames }) {
-    const rutaActual = route().current();
-    const navegacion = [
-        { label: 'Planificación de rutas', href: route(rutaActual), active: rutaActual },
-        { label: 'Rutas generadas', href: `${route(rutaActual)}#rutas-generadas`, hash: '#rutas-generadas' },
-    ];
     const form = useForm({
         camion_id: '',
         fecha: new Date().toISOString().slice(0, 10),
@@ -37,10 +34,9 @@ export default function Index({ reportes, equipos, rutas, routeNames }) {
     });
     const rutasActivas = rutas.filter((rutaItem) => ['Planificada', 'En curso'].includes(rutaItem.estado));
     const todosLosPuntos = [
+        BASE_MUNICIPAL,
         ...reportes.map((reporte) => [reporte.latitud, reporte.longitud]),
-        ...rutasActivas.flatMap((rutaItem) =>
-            rutaItem.reportes.map((reporte) => [reporte.latitud, reporte.longitud]),
-        ),
+        ...rutasActivas.flatMap((rutaItem) => posicionesDeRuta(rutaItem)),
     ];
 
     const alternarReporte = (id) => {
@@ -67,7 +63,7 @@ export default function Index({ reportes, equipos, rutas, routeNames }) {
     };
 
     return (
-        <ModuleLayout moduleName="Gestión de rutas" items={navegacion}>
+        <ModuleLayout moduleName="Gestión de rutas" items={navegacionRutas(routeNames)}>
             <Head title="Gestión de rutas" />
 
             <div className="min-h-screen bg-slate-50 px-5 py-7 sm:px-8 lg:px-10">
@@ -76,7 +72,7 @@ export default function Index({ reportes, equipos, rutas, routeNames }) {
                         <p className="text-sm font-semibold text-emerald-700">Planificación operativa</p>
                         <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">Gestión de rutas</h2>
                         <p className="mt-1 text-sm text-slate-500">
-                            Selecciona incidencias, asigna un vehículo y genera el orden óptimo del recorrido.
+                            Selecciona incidencias, asigna un vehículo y genera el recorrido más rápido por las calles.
                         </p>
                     </div>
 
@@ -93,7 +89,7 @@ export default function Index({ reportes, equipos, rutas, routeNames }) {
                                 </div>
                                 <div className="ml-auto flex gap-3 text-xs text-slate-500">
                                     <span>● Pendiente</span>
-                                    <span className="text-blue-600">━ Ruta asignada</span>
+                                    <span className="text-blue-600">━ Ruta por calles</span>
                                 </div>
                             </div>
 
@@ -104,17 +100,28 @@ export default function Index({ reportes, equipos, rutas, routeNames }) {
                                 />
                                 <AjustarMapa puntos={todosLosPuntos} />
 
+                                <CircleMarker
+                                    center={BASE_MUNICIPAL}
+                                    radius={8}
+                                    pathOptions={{ color: '#fff', weight: 2, fillColor: '#111827', fillOpacity: 1 }}
+                                >
+                                    <Popup>
+                                        <strong>Base municipal</strong>
+                                        <p>Punto de partida de las rutas.</p>
+                                    </Popup>
+                                </CircleMarker>
+
                                 {rutasActivas.map((rutaItem, indice) => {
                                     const color = coloresRuta[indice % coloresRuta.length];
-                                    const posiciones = rutaItem.reportes.map((reporte) => [reporte.latitud, reporte.longitud]);
+                                    const posiciones = posicionesDeRuta(rutaItem);
 
-                                    return (
+                                    return posiciones.length >= 2 ? (
                                         <Polyline
                                             key={rutaItem.id}
                                             positions={posiciones}
-                                            pathOptions={{ color, weight: 5, opacity: 0.8 }}
+                                            pathOptions={{ color, weight: 5, opacity: 0.85 }}
                                         />
-                                    );
+                                    ) : null;
                                 })}
 
                                 {reportes.map((reporte) => (
@@ -167,7 +174,7 @@ export default function Index({ reportes, equipos, rutas, routeNames }) {
                             <form onSubmit={generar} className="sticky top-5 space-y-4 border border-slate-300 bg-white p-5 shadow-sm">
                                 <div>
                                     <h3 className="font-bold text-slate-900">Nueva ruta</h3>
-                                    <p className="text-xs text-slate-500">La optimización inicia desde la base municipal.</p>
+                                    <p className="text-xs text-slate-500">El trazado sigue las calles desde la base municipal.</p>
                                 </div>
 
                                 <label className="block text-xs font-semibold text-slate-600">
@@ -246,6 +253,10 @@ export default function Index({ reportes, equipos, rutas, routeNames }) {
                                     <dl className="mt-4 grid grid-cols-2 gap-3 text-xs">
                                         <div><dt className="text-slate-400">Paradas</dt><dd className="font-bold">{rutaItem.reportes.length}</dd></div>
                                         <div><dt className="text-slate-400">Distancia estimada</dt><dd className="font-bold">{rutaItem.distancia_estimada_km} km</dd></div>
+                                        <div className="col-span-2">
+                                            <dt className="text-slate-400">Horario</dt>
+                                            <dd className="font-bold">{rutaItem.horario_resumen || 'Sin programar'}</dd>
+                                        </div>
                                     </dl>
                                     <ol className="mt-4 space-y-1 text-xs text-slate-600">
                                         {rutaItem.reportes.slice(0, 5).map((reporte) => (

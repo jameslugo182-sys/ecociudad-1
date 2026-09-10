@@ -8,10 +8,12 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GestionRutasController;
 use App\Http\Controllers\LimpiezaController;
 use App\Http\Controllers\MaestroContratoController;
+use App\Http\Controllers\MantenimientoVehiculoController;
 use App\Http\Controllers\MapaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\ReporteMetricasController;
+use App\Http\Controllers\TipoMantenimientoController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -90,19 +92,52 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::middleware('module:vehiculos')->group(function () {
                 Route::get('/vehiculos', [CamionController::class, 'index'])->name('vehiculos.index');
+                Route::get('/vehiculos/equipos', [CamionController::class, 'equipos'])->name('vehiculos.equipos');
                 Route::post('/vehiculos', [CamionController::class, 'store'])->name('vehiculos.store');
-                Route::put('/vehiculos/{camion}', [CamionController::class, 'update'])->name('vehiculos.update');
-                Route::delete('/vehiculos/{camion}', [CamionController::class, 'destroy'])->name('vehiculos.destroy');
+
+                Route::get('/vehiculos/mantenimiento', [MantenimientoVehiculoController::class, 'registro'])
+                    ->name('vehiculos.mantenimiento.registro');
+                Route::post('/vehiculos/mantenimiento', [MantenimientoVehiculoController::class, 'store'])
+                    ->name('vehiculos.mantenimiento.store');
+                Route::get('/vehiculos/mantenimiento/en-curso', [MantenimientoVehiculoController::class, 'enCurso'])
+                    ->name('vehiculos.mantenimiento.en-curso');
+                Route::get('/vehiculos/mantenimiento/historial', [MantenimientoVehiculoController::class, 'historial'])
+                    ->name('vehiculos.mantenimiento.historial');
+                Route::patch('/vehiculos/mantenimiento/{mantenimiento}/finalizar', [MantenimientoVehiculoController::class, 'finalizar'])
+                    ->name('vehiculos.mantenimiento.finalizar');
+
+                Route::get('/vehiculos/maestros/tipos', [TipoMantenimientoController::class, 'index'])
+                    ->name('vehiculos.maestros.tipos.index');
+                Route::post('/vehiculos/maestros/tipos', [TipoMantenimientoController::class, 'store'])
+                    ->name('vehiculos.maestros.tipos.store');
+                Route::put('/vehiculos/maestros/tipos/{tipo}', [TipoMantenimientoController::class, 'update'])
+                    ->name('vehiculos.maestros.tipos.update');
+                Route::patch('/vehiculos/maestros/tipos/{tipo}/estado', [TipoMantenimientoController::class, 'cambiarEstado'])
+                    ->name('vehiculos.maestros.tipos.estado');
+
+                Route::post('/vehiculos/{camion}', [CamionController::class, 'update'])
+                    ->whereNumber('camion')
+                    ->name('vehiculos.update');
+                Route::delete('/vehiculos/{camion}', [CamionController::class, 'destroy'])
+                    ->whereNumber('camion')
+                    ->name('vehiculos.destroy');
                 Route::put('/vehiculos/{camion}/equipo', [CamionController::class, 'asignarEquipo'])
+                    ->whereNumber('camion')
                     ->name('vehiculos.equipo');
             });
 
             Route::get('/rutas', [GestionRutasController::class, 'index'])
                 ->middleware('module:rutas')
                 ->name('rutas.index');
+            Route::get('/rutas/horarios', [GestionRutasController::class, 'horarios'])
+                ->middleware('module:rutas')
+                ->name('rutas.horarios');
             Route::post('/rutas', [GestionRutasController::class, 'store'])
                 ->middleware('module:rutas')
                 ->name('rutas.store');
+            Route::patch('/rutas/{ruta}/horario', [GestionRutasController::class, 'actualizarHorario'])
+                ->middleware('module:rutas')
+                ->name('rutas.horario');
             Route::patch('/rutas/{ruta}/cancelar', [GestionRutasController::class, 'cancelar'])
                 ->middleware('module:rutas')
                 ->name('rutas.cancelar');
@@ -125,7 +160,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/rutas/generar', [AdminController::class, 'generarRuta'])
                 ->name('rutas.generar');
             Route::get('/rutas', [GestionRutasController::class, 'index'])->name('rutas.index');
+            Route::get('/rutas/horarios', [GestionRutasController::class, 'horarios'])->name('rutas.horarios');
             Route::post('/rutas', [GestionRutasController::class, 'store'])->name('rutas.store');
+            Route::patch('/rutas/{ruta}/horario', [GestionRutasController::class, 'actualizarHorario'])
+                ->name('rutas.horario');
             Route::patch('/rutas/{ruta}/cancelar', [GestionRutasController::class, 'cancelar'])
                 ->name('rutas.cancelar');
             Route::get('/metricas', [ReporteMetricasController::class, 'index'])->name('metricas.index');
@@ -136,7 +174,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('module:operaciones')
         ->group(function () {
             Route::get('/', [LimpiezaController::class, 'dashboard'])->name('dashboard');
-            Route::get('/rutas', [LimpiezaController::class, 'dashboard'])->name('rutas.index');
+            Route::get('/rutas', [LimpiezaController::class, 'recorrido'])->name('rutas.index');
             Route::patch('/reportes/{reporte}/iniciar', [LimpiezaController::class, 'iniciar'])
                 ->name('reportes.iniciar');
             Route::post('/reportes/{reporte}/evidencia', [LimpiezaController::class, 'registrarEvidencia'])

@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -17,10 +18,45 @@ class CamionController extends Controller
 {
     private const ESTADOS = ['Disponible', 'Mantenimiento', 'Inactivo'];
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $filters = $request->validate([
+            'buscar' => ['nullable', 'string', 'max:100'],
+            'estado' => ['nullable', Rule::in(self::ESTADOS)],
+        ]);
+
+        $camiones = Camion::query()
+            ->withCount('personal')
+            ->when($filters['buscar'] ?? null, function ($query, $buscar) {
+                $query->where(function ($subquery) use ($buscar) {
+                    $subquery
+                        ->where('codigo', 'like', "%{$buscar}%")
+                        ->orWhere('placa', 'like', "%{$buscar}%")
+                        ->orWhere('marca', 'like', "%{$buscar}%")
+                        ->orWhere('modelo', 'like', "%{$buscar}%");
+                });
+            })
+            ->when($filters['estado'] ?? null, fn ($query, $estado) => $query->where('estado', $estado))
+            ->orderBy('codigo')
+            ->paginate(12)
+            ->withQueryString();
+
         return Inertia::render('Administracion/Camiones', [
+            'camiones' => $camiones,
+            'filters' => [
+                'buscar' => $filters['buscar'] ?? '',
+                'estado' => $filters['estado'] ?? '',
+            ],
+            'estados' => self::ESTADOS,
+            'siguienteCodigo' => $this->siguienteCodigo(),
+        ]);
+    }
+
+    public function equipos(): Response
+    {
+        return Inertia::render('Administracion/Equipos', [
             'camiones' => Camion::query()
+                ->disponiblesParaEquipo()
                 ->with(['personal' => fn ($query) => $query->select('users.id', 'name', 'email')])
                 ->orderBy('codigo')
                 ->get(),
@@ -30,29 +66,49 @@ class CamionController extends Controller
                 ->with('camiones:id,codigo,placa')
                 ->orderBy('name')
                 ->get(['id', 'name', 'email']),
-            'estados' => self::ESTADOS,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validarCamion($request);
+        $datos = $this->normalizarCamion($validated);
+        $datos['codigo'] = $this->siguienteCodigo();
 
-        Camion::create($this->normalizarCamion($validated));
+        if ($request->hasFile('foto')) {
+            $datos['foto_path'] = $request->file('foto')->store('vehiculos', 'public');
+        }
 
-        return back()->with('success', 'Camión registrado correctamente.');
+        Camion::create($datos);
+
+        return back()
+            ->with('success', 'Camión registrado correctamente.')
+            ->with('registered', true);
     }
 
     public function update(Request $request, Camion $camion): RedirectResponse
     {
         $validated = $this->validarCamion($request, $camion);
-        $camion->update($this->normalizarCamion($validated));
+        $datos = $this->normalizarCamion($validated);
+
+        if ($request->hasFile('foto')) {
+            if ($camion->foto_path) {
+                Storage::disk('public')->delete($camion->foto_path);
+            }
+            $datos['foto_path'] = $request->file('foto')->store('vehiculos', 'public');
+        }
+
+        $camion->update($datos);
 
         return back()->with('success', 'Datos del camión actualizados.');
     }
 
     public function destroy(Camion $camion): RedirectResponse
     {
+        if ($camion->foto_path) {
+            Storage::disk('public')->delete($camion->foto_path);
+        }
+
         $camion->delete();
 
         return back()->with('success', 'Camión eliminado.');
@@ -60,6 +116,12 @@ class CamionController extends Controller
 
     public function asignarEquipo(Request $request, Camion $camion): RedirectResponse
     {
+        if ($camion->enMantenimiento()) {
+            throw ValidationException::withMessages([
+                'equipo' => 'El vehículo está en mantenimiento y no puede recibir un equipo.',
+            ]);
+        }
+
         $usuarioLimpieza = Rule::exists('users', 'id')
             ->where('rol', 'area_limpieza')
             ->where('activo', true);
@@ -106,7 +168,9 @@ class CamionController extends Controller
             $camion->personal()->sync($equipo);
         });
 
-        return back()->with('success', "Equipo del camión {$camion->codigo} asignado correctamente.");
+        return back()
+            ->with('success', "Equipo del camión {$camion->codigo} asignado correctamente.")
+            ->with('registered', true);
     }
 
     /**
@@ -115,12 +179,6 @@ class CamionController extends Controller
     private function validarCamion(Request $request, ?Camion $camion = null): array
     {
         return $request->validate([
-            'codigo' => [
-                'required',
-                'string',
-                'max:30',
-                Rule::unique('camiones', 'codigo')->ignore($camion),
-            ],
             'placa' => [
                 'required',
                 'string',
@@ -132,6 +190,12 @@ class CamionController extends Controller
             'anio' => ['nullable', 'integer', 'min:1980', 'max:'.(now()->year + 1)],
             'capacidad_kg' => ['nullable', 'integer', 'min:1', 'max:100000'],
             'estado' => ['required', Rule::in(self::ESTADOS)],
+            'foto' => [
+                $camion ? 'nullable' : 'required',
+                'image',
+                'mimes:jpeg,png,jpg,webp',
+                'max:5120',
+            ],
         ]);
     }
 
@@ -141,10 +205,26 @@ class CamionController extends Controller
      */
     private function normalizarCamion(array $validated): array
     {
+        unset($validated['foto']);
+
         return [
             ...$validated,
-            'codigo' => Str::upper($validated['codigo']),
             'placa' => Str::upper($validated['placa']),
         ];
+    }
+
+    private function siguienteCodigo(): string
+    {
+        $ultimo = Camion::query()
+            ->where('codigo', 'like', 'VH%')
+            ->orderByDesc('id')
+            ->value('codigo');
+
+        $numero = 1;
+        if (is_string($ultimo) && preg_match('/VH(\d+)/i', $ultimo, $coincidencias)) {
+            $numero = ((int) $coincidencias[1]) + 1;
+        }
+
+        return 'VH'.str_pad((string) $numero, 3, '0', STR_PAD_LEFT);
     }
 }

@@ -1,18 +1,20 @@
 import FlashMessage from '@/Components/FlashMessage';
+import RutaOperativaMapa from '@/Components/RutaOperativaMapa';
 import TareaLimpiezaCard from '@/Components/TareaLimpiezaCard';
 import ModuleLayout from '@/Layouts/ModuleLayout';
 import { Head } from '@inertiajs/react';
 
-export default function Dashboard({ reportes, resumen }) {
-    const navegacion = [
-        { label: 'Tareas asignadas', href: route('limpieza.dashboard'), active: 'limpieza.dashboard', icon: '01' },
-        { label: 'Mi recorrido', href: route('limpieza.rutas.index'), active: 'limpieza.rutas.index', icon: '02' },
-    ];
+const navegacionLimpieza = [
+    { label: 'Tareas asignadas', href: route('limpieza.dashboard'), active: 'limpieza.dashboard' },
+    { label: 'Mi recorrido', href: route('limpieza.rutas.index'), active: 'limpieza.rutas.index' },
+];
+
+export default function Dashboard({ reportes, resumen, rutaAsignada }) {
     const activos = reportes.filter((reporte) => reporte.estado !== 'Atendido');
     const finalizados = reportes.filter((reporte) => reporte.estado === 'Atendido');
 
     return (
-        <ModuleLayout moduleName="Operaciones de limpieza" items={navegacion}>
+        <ModuleLayout moduleName="Operaciones de limpieza" items={navegacionLimpieza}>
             <Head title="Tareas de limpieza" />
 
             <div className="min-h-screen bg-slate-50 py-8">
@@ -36,11 +38,43 @@ export default function Dashboard({ reportes, resumen }) {
                         ))}
                     </section>
 
+                    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+                            <div>
+                                <h3 className="font-bold text-slate-900">Ruta de tu flota</h3>
+                                <p className="text-xs text-slate-500">
+                                    {rutaAsignada
+                                        ? `${rutaAsignada.camion.codigo} · ${rutaAsignada.camion.placa} · ${rutaAsignada.distancia_estimada_km} km${rutaAsignada.horario_resumen ? ` · ${rutaAsignada.horario_resumen}` : ''}`
+                                        : 'Cuando te asignen un recorrido, aquí verás solo la ruta de tu vehículo.'}
+                                </p>
+                            </div>
+                            {rutaAsignada && (
+                                <a
+                                    href={route('limpieza.rutas.index')}
+                                    className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+                                >
+                                    Ver recorrido completo
+                                </a>
+                            )}
+                        </div>
+
+                        {rutaAsignada ? (
+                            <RutaOperativaMapa ruta={rutaAsignada} altura="h-[420px]" />
+                        ) : (
+                            <div className="px-5 py-16 text-center">
+                                <p className="font-semibold text-slate-700">Aún no hay una ruta asignada a tu flota.</p>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Las incidencias individuales seguirán apareciendo en las tarjetas de abajo.
+                                </p>
+                            </div>
+                        )}
+                    </section>
+
                     <section className="space-y-4">
                         <div>
                             <h2 className="text-lg font-bold text-slate-900">Recorrido pendiente</h2>
                             <p className="text-sm text-slate-500">
-                                Los números indican el orden sugerido de la ruta optimizada.
+                                Los números indican el orden de las paradas sobre las calles.
                             </p>
                         </div>
 

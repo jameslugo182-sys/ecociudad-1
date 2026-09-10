@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Support\Facades\Storage;
 
 class Reporte extends Model
 {
@@ -62,14 +61,14 @@ class Reporte extends Model
     public function getFotoUrlAttribute(): ?string
     {
         return $this->foto_path
-            ? Storage::disk('public')->url($this->foto_path)
+            ? url('storage/'.ltrim($this->foto_path, '/'))
             : null;
     }
 
     public function getEvidenciaUrlAttribute(): ?string
     {
         return $this->evidencia_path
-            ? Storage::disk('public')->url($this->evidencia_path)
+            ? url('storage/'.ltrim($this->evidencia_path, '/'))
             : null;
     }
 }

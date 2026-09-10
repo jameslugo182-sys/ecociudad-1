@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class Contrato extends Model
 {
@@ -51,7 +50,7 @@ class Contrato extends Model
     public function getDocumentoUrlAttribute(): ?string
     {
         return $this->documento_path
-            ? Storage::disk('public')->url($this->documento_path)
+            ? url('storage/'.ltrim($this->documento_path, '/'))
             : null;
     }
 }

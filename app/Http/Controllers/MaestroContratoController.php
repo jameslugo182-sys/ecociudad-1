@@ -52,7 +52,9 @@ class MaestroContratoController extends Controller
             'descripcion' => ['nullable', 'string', 'max:1000'],
         ]));
 
-        return back()->with('success', 'Cargo agregado al maestro.');
+        return back()
+            ->with('success', 'Cargo agregado al maestro.')
+            ->with('registered', true);
     }
 
     public function updateCargo(Request $request, Cargo $cargo): RedirectResponse
@@ -76,7 +78,9 @@ class MaestroContratoController extends Controller
     {
         RolSistema::create($this->validarRol($request));
 
-        return back()->with('success', 'Rol agregado al maestro.');
+        return back()
+            ->with('success', 'Rol agregado al maestro.')
+            ->with('registered', true);
     }
 
     public function updateRol(Request $request, RolSistema $rol): RedirectResponse

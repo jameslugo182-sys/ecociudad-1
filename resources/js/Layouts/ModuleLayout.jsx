@@ -1,5 +1,6 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
+import SuccessDialog from '@/Components/SuccessDialog';
 import { broadcastLogout } from '@/sessionSync';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
@@ -134,6 +135,7 @@ export default function ModuleLayout({ moduleName, items, children }) {
             </aside>
 
             <main className="min-w-0 bg-slate-50">{children}</main>
+            <SuccessDialog />
         </div>
     );
 }

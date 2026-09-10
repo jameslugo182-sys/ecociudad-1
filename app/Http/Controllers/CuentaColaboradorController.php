@@ -69,7 +69,9 @@ class CuentaColaboradorController extends Controller
             'email_verified_at' => now(),
         ]);
 
-        return back()->with('success', 'Cuenta de acceso creada correctamente.');
+        return back()
+            ->with('success', 'Cuenta de acceso creada correctamente.')
+            ->with('registered', true);
     }
 
     public function update(Request $request, User $user): RedirectResponse

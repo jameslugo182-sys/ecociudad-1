@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Camion;
 use App\Models\Reporte;
 use App\Models\RutaRecoleccion;
+use App\Services\TrazadoRutaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -51,16 +52,65 @@ class GestionRutasController extends Controller
                 ->latest('fecha')
                 ->latest()
                 ->take(20)
-                ->get(),
-            'routeNames' => [
-                'store' => $request->routeIs('administracion.*')
-                    ? 'administracion.rutas.store'
-                    : 'admin.rutas.store',
-                'cancelar' => $request->routeIs('administracion.*')
-                    ? 'administracion.rutas.cancelar'
-                    : 'admin.rutas.cancelar',
-            ],
+                ->get()
+                ->each(function (RutaRecoleccion $ruta) {
+                    if (in_array($ruta->estado, ['Planificada', 'En curso'], true)) {
+                        $ruta->completarTrazadoVial();
+                    }
+                }),
+            'routeNames' => $this->routeNames($request),
         ]);
+    }
+
+    public function horarios(Request $request): Response
+    {
+        return Inertia::render('Rutas/Horarios', [
+            'rutas' => RutaRecoleccion::query()
+                ->whereIn('estado', ['Planificada', 'En curso'])
+                ->with([
+                    'camion.personal' => fn ($query) => $query->select('users.id', 'name'),
+                    'reportes:id,descripcion,estado,latitud,longitud,ruta_orden',
+                ])
+                ->latest('fecha')
+                ->latest()
+                ->get(),
+            'routeNames' => $this->routeNames($request),
+        ]);
+    }
+
+    public function actualizarHorario(Request $request, RutaRecoleccion $ruta): RedirectResponse
+    {
+        abort_unless(
+            in_array($ruta->estado, ['Planificada', 'En curso'], true),
+            422,
+            'Solo se puede programar el horario de una ruta activa.'
+        );
+
+        $validated = $request->validate([
+            'hora_inicio' => ['required', 'date_format:H:i'],
+            'hora_fin' => ['required', 'date_format:H:i', 'after:hora_inicio'],
+            'dias_recoleccion' => ['required', 'array', 'min:1'],
+            'dias_recoleccion.*' => ['integer', 'distinct', Rule::in([1, 2, 3, 4, 5, 6, 7])],
+            'horario_nota' => ['nullable', 'string', 'max:160'],
+        ], [
+            'hora_fin.after' => 'La hora de término debe ser posterior a la hora de inicio.',
+            'dias_recoleccion.required' => 'Selecciona al menos un día de recolección.',
+        ]);
+
+        $ruta->update([
+            'hora_inicio' => $validated['hora_inicio'],
+            'hora_fin' => $validated['hora_fin'],
+            'dias_recoleccion' => collect($validated['dias_recoleccion'])
+                ->map(fn ($dia) => (int) $dia)
+                ->unique()
+                ->sort()
+                ->values()
+                ->all(),
+            'horario_nota' => $validated['horario_nota'] ?? null,
+        ]);
+        $ruta->load('camion:id,codigo');
+
+        return back()->with('success', "Horario asignado a la flota {$ruta->camion->codigo}.");
     }
 
     public function store(Request $request): RedirectResponse
@@ -102,14 +152,15 @@ class GestionRutasController extends Controller
                 ]);
             }
 
-            $ordenados = $this->ordenarRuta($reportes->all());
-            $distanciaTotal = collect($ordenados)->sum('distancia');
+            $trazado = app(TrazadoRutaService::class)->trazar($reportes->all());
+            $ordenados = $trazado['paradas'];
             $ruta = RutaRecoleccion::create([
                 'camion_id' => $camion->id,
                 'generado_por' => $request->user()->id,
                 'fecha' => $validated['fecha'],
                 'estado' => 'Planificada',
-                'distancia_estimada_km' => round($distanciaTotal, 2),
+                'distancia_estimada_km' => $trazado['distancia_km'],
+                'geometria' => $trazado['geometria'],
             ]);
             $conductor = $camion->personal->firstWhere('pivot.puesto', 'conductor');
             $puntos = [];
@@ -130,7 +181,9 @@ class GestionRutasController extends Controller
             $ruta->reportes()->attach($puntos);
         });
 
-        return back()->with('success', 'Ruta generada y asignada al equipo del vehículo.');
+        return back()
+            ->with('success', 'Ruta trazada por las calles más rápidas y asignada al equipo del vehículo.')
+            ->with('registered', true);
     }
 
     public function cancelar(RutaRecoleccion $ruta): RedirectResponse
@@ -155,51 +208,18 @@ class GestionRutasController extends Controller
     }
 
     /**
-     * @param  array<int, Reporte>  $reportes
-     * @return array<int, array{reporte: Reporte, distancia: float}>
+     * @return array<string, string>
      */
-    private function ordenarRuta(array $reportes): array
+    private function routeNames(Request $request): array
     {
-        $actualLat = -12.0504;
-        $actualLng = -75.2215;
-        $ruta = [];
+        $esAdministracion = $request->routeIs('administracion.*');
 
-        while ($reportes !== []) {
-            $indiceCercano = 0;
-            $distanciaMinima = PHP_FLOAT_MAX;
-
-            foreach ($reportes as $indice => $reporte) {
-                $distancia = $this->distanciaHaversine(
-                    $actualLat,
-                    $actualLng,
-                    $reporte->latitud,
-                    $reporte->longitud
-                );
-
-                if ($distancia < $distanciaMinima) {
-                    $distanciaMinima = $distancia;
-                    $indiceCercano = $indice;
-                }
-            }
-
-            $siguiente = $reportes[$indiceCercano];
-            $ruta[] = ['reporte' => $siguiente, 'distancia' => $distanciaMinima];
-            $actualLat = $siguiente->latitud;
-            $actualLng = $siguiente->longitud;
-            array_splice($reportes, $indiceCercano, 1);
-        }
-
-        return $ruta;
-    }
-
-    private function distanciaHaversine(float $lat1, float $lng1, float $lat2, float $lng2): float
-    {
-        $radioTierra = 6371;
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLng = deg2rad($lng2 - $lng1);
-        $a = sin($dLat / 2) ** 2
-            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
-
-        return $radioTierra * 2 * atan2(sqrt($a), sqrt(1 - $a));
+        return [
+            'index' => $esAdministracion ? 'administracion.rutas.index' : 'admin.rutas.index',
+            'store' => $esAdministracion ? 'administracion.rutas.store' : 'admin.rutas.store',
+            'cancelar' => $esAdministracion ? 'administracion.rutas.cancelar' : 'admin.rutas.cancelar',
+            'horarios' => $esAdministracion ? 'administracion.rutas.horarios' : 'admin.rutas.horarios',
+            'horario' => $esAdministracion ? 'administracion.rutas.horario' : 'admin.rutas.horario',
+        ];
     }
 }
