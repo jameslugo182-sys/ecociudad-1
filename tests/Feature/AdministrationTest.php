@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\AreaUnidad;
 use App\Models\Camion;
 use App\Models\Cargo;
 use App\Models\Colaborador;
+use App\Models\HorarioPersonal;
 use App\Models\MantenimientoVehiculo;
+use App\Models\PlantillaHorario;
 use App\Models\Reporte;
 use App\Models\RutaRecoleccion;
 use App\Models\TipoMantenimiento;
@@ -47,18 +50,21 @@ class AdministrationTest extends TestCase
     {
         $administrador = User::factory()->create(['rol' => 'administrador']);
         $cargo = Cargo::where('nombre', 'Recolector')->firstOrFail();
+        $area = AreaUnidad::where('nombre', 'Limpieza pública')->firstOrFail();
 
         $this->actingAs($administrador)
             ->post(route('administracion.contratos.store'), [
                 'documento' => '72345678',
                 'nombres' => 'Operario',
                 'apellido_paterno' => 'Municipal',
+                'sexo' => 'Masculino',
+                'nivel_educativo' => 'Secundaria',
                 'numero' => 'CON-2026-001',
                 'cargo_id' => $cargo->id,
                 'tipo' => 'CAS',
                 'fecha_inicio' => today()->subDay()->toDateString(),
                 'fecha_fin' => today()->addYear()->toDateString(),
-                'area' => 'Limpieza pública',
+                'area_id' => $area->id,
                 'estado' => 'Vigente',
             ])
             ->assertRedirect()
@@ -83,6 +89,128 @@ class AdministrationTest extends TestCase
             'colaborador_id' => $colaborador->id,
             'activo' => true,
         ]);
+
+        $this->assertDatabaseHas('colaboradores', [
+            'documento' => '72345678',
+            'sexo' => 'Masculino',
+            'nivel_educativo' => 'Secundaria',
+        ]);
+
+        $this->assertDatabaseHas('contratos', [
+            'numero' => 'CON-2026-001',
+            'area' => 'Limpieza pública',
+            'area_id' => $area->id,
+        ]);
+    }
+
+    public function test_contract_format_pdf_is_generated_from_form_data(): void
+    {
+        $administrador = User::factory()->create(['rol' => 'administrador']);
+        $cargo = Cargo::where('nombre', 'Recolector')->firstOrFail();
+        $area = AreaUnidad::where('nombre', 'Limpieza pública')->firstOrFail();
+
+        $response = $this->actingAs($administrador)
+            ->post(route('administracion.contratos.formato'), [
+                'documento' => '87654321',
+                'nombres' => 'Ana',
+                'apellido_paterno' => 'Quispe',
+                'apellido_materno' => 'Rojas',
+                'sexo' => 'Femenino',
+                'nivel_educativo' => 'Universitario',
+                'numero' => 'CON-2026-PDF',
+                'cargo_id' => $cargo->id,
+                'tipo' => 'CAS',
+                'fecha_inicio' => today()->toDateString(),
+                'fecha_fin' => today()->addMonths(6)->toDateString(),
+                'area_id' => $area->id,
+                'estado' => 'Vigente',
+            ]);
+
+        $response->assertOk();
+        $this->assertStringContainsString('pdf', strtolower((string) $response->headers->get('content-type')));
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+    }
+
+    public function test_schedule_template_and_assignment_can_be_registered(): void
+    {
+        $administrador = User::factory()->create(['rol' => 'administrador']);
+        $cargo = Cargo::where('nombre', 'Recolector')->firstOrFail();
+        $area = AreaUnidad::where('nombre', 'Limpieza pública')->firstOrFail();
+
+        $this->actingAs($administrador)
+            ->post(route('administracion.contratos.store'), [
+                'documento' => '70111222',
+                'nombres' => 'Luis',
+                'apellido_paterno' => 'Paredes',
+                'numero' => 'CON-2026-HOR',
+                'cargo_id' => $cargo->id,
+                'tipo' => 'CAS',
+                'fecha_inicio' => today()->toDateString(),
+                'fecha_fin' => today()->addYear()->toDateString(),
+                'area_id' => $area->id,
+                'estado' => 'Vigente',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $turnos = [
+            ['clave' => 'manana', 'nombre' => 'Turno mañana', 'inicio' => '07:00', 'fin' => '13:00'],
+            ['clave' => 'tarde', 'nombre' => 'Turno tarde', 'inicio' => '14:00', 'fin' => '18:00'],
+            ['clave' => 'noche', 'nombre' => 'Turno noche', 'inicio' => '19:00', 'fin' => '23:00'],
+        ];
+        $dias = [
+            1 => [
+                'manana' => ['inicio' => '07:00', 'fin' => '13:00'],
+                'tarde' => ['inicio' => '14:00', 'fin' => '18:00'],
+                'noche' => ['inicio' => '19:00', 'fin' => '23:00'],
+            ],
+        ];
+
+        $this->actingAs($administrador)
+            ->post(route('administracion.contratos.horarios.plantillas.store'), [
+                'nombre' => 'Turno completo lunes',
+                'turnos' => $turnos,
+                'dias' => $dias,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $plantilla = PlantillaHorario::where('nombre', 'Turno completo lunes')->firstOrFail();
+        $this->assertEquals(14.0, (float) $plantilla->horas_semanales);
+
+        $colaborador = Colaborador::where('documento', '70111222')->firstOrFail();
+
+        $this->actingAs($administrador)
+            ->post(route('administracion.contratos.horarios.registro.store'), [
+                'colaborador_id' => $colaborador->id,
+                'plantilla_horario_id' => $plantilla->id,
+                'vigencia_inicio' => today()->toDateString(),
+                'turnos' => $turnos,
+                'dias' => $dias,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('horarios_personal', [
+            'colaborador_id' => $colaborador->id,
+            'plantilla_horario_id' => $plantilla->id,
+        ]);
+
+        $this->assertEquals(14.0, (float) HorarioPersonal::firstOrFail()->horas_semanales);
+
+        $horario = HorarioPersonal::firstOrFail();
+        $pdf = $this->actingAs($administrador)
+            ->get(route('administracion.contratos.horarios.registro.pdf', $horario));
+
+        $pdf->assertOk();
+        $this->assertStringContainsString('pdf', strtolower((string) $pdf->headers->get('content-type')));
+        $this->assertStringStartsWith('%PDF', $pdf->getContent());
+
+        $this->actingAs($administrador)
+            ->get(route('administracion.contratos.maestros.areas.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Contratos/Maestros/Catalogo')
+                ->where('titulo', 'Áreas / unidades'));
     }
 
     public function test_role_master_limits_access_to_configured_modules(): void

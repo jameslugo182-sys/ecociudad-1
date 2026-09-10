@@ -6,3 +6,10 @@
     background: transparent;
     border: none;
 }
+
+input[type='time']::-webkit-datetime-edit-ampm-field {
+    min-width: 2.75rem;
+    padding-inline: 0.35rem;
+    margin-left: 0.15rem;
+}
+

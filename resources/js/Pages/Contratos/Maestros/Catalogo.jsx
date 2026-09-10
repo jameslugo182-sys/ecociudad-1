@@ -1,4 +1,4 @@
-import CargoMaestroRow from '@/Components/CargoMaestroRow';
+import CatalogoItemRow from '@/Components/CatalogoItemRow';
 import FlashMessage from '@/Components/FlashMessage';
 import Modal from '@/Components/Modal';
 import ModuleLayout from '@/Layouts/ModuleLayout';
@@ -8,7 +8,7 @@ import { useState } from 'react';
 
 const datosIniciales = { nombre: '', descripcion: '' };
 
-export default function Cargos({ cargos }) {
+export default function Catalogo({ titulo, descripcion, placeholderNombre, items, conteoLabel, routeNames, botonNuevo = '+ Nuevo registro' }) {
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [editando, setEditando] = useState(null);
     const form = useForm(datosIniciales);
@@ -25,9 +25,9 @@ export default function Cargos({ cargos }) {
         setMostrarFormulario(true);
     };
 
-    const abrirEditar = (cargo) => {
-        setEditando(cargo.id);
-        form.setData({ nombre: cargo.nombre, descripcion: cargo.descripcion || '' });
+    const abrirEditar = (item) => {
+        setEditando(item.id);
+        form.setData({ nombre: item.nombre, descripcion: item.descripcion || '' });
         form.clearErrors();
         setMostrarFormulario(true);
     };
@@ -35,8 +35,8 @@ export default function Cargos({ cargos }) {
     const guardar = (event) => {
         event.preventDefault();
         const destino = editando
-            ? route('administracion.contratos.maestros.cargos.update', editando)
-            : route('administracion.contratos.maestros.cargos.store');
+            ? route(routeNames.update, editando)
+            : route(routeNames.store);
         const enviar = editando ? form.put.bind(form) : form.post.bind(form);
 
         enviar(destino, {
@@ -47,22 +47,22 @@ export default function Cargos({ cargos }) {
 
     return (
         <ModuleLayout moduleName="Gestión de contratos" items={navegacionContratos}>
-            <Head title="Maestro de cargos" />
+            <Head title={titulo} />
 
             <div className="min-h-screen px-5 py-7 sm:px-8 lg:px-10">
                 <div className="mx-auto max-w-7xl space-y-6">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="text-sm font-semibold text-emerald-700">Maestros</p>
-                            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">Cargos</h2>
-                            <p className="mt-1 text-sm text-slate-500">Valores disponibles en el registro de contratos.</p>
+                            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">{titulo}</h2>
+                            <p className="mt-1 text-sm text-slate-500">{descripcion}</p>
                         </div>
                         <button
                             type="button"
                             onClick={abrirNuevo}
                             className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
                         >
-                            + Nuevo cargo
+                            {botonNuevo}
                         </button>
                     </div>
 
@@ -72,7 +72,7 @@ export default function Cargos({ cargos }) {
                         <form onSubmit={guardar} className="bg-white">
                             <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
                                 <div>
-                                    <h3 className="font-bold text-slate-900">{editando ? 'Editar cargo' : 'Nuevo cargo'}</h3>
+                                    <h3 className="font-bold text-slate-900">{editando ? 'Editar registro' : 'Nuevo registro'}</h3>
                                     <p className="text-xs text-slate-500">Los campos con * son obligatorios.</p>
                                 </div>
                                 <button type="button" onClick={cerrarFormulario} className="text-xl text-slate-400 hover:text-slate-700">×</button>
@@ -80,7 +80,7 @@ export default function Cargos({ cargos }) {
                             <div className="space-y-4 p-6">
                                 <label className="block text-xs font-semibold text-slate-600">
                                     Nombre *
-                                    <input value={form.data.nombre} onChange={(event) => form.setData('nombre', event.target.value)} className="mt-1.5 w-full rounded-xl border-slate-300 text-sm" required />
+                                    <input value={form.data.nombre} onChange={(event) => form.setData('nombre', event.target.value)} placeholder={placeholderNombre} className="mt-1.5 w-full rounded-xl border-slate-300 text-sm" required />
                                 </label>
                                 <label className="block text-xs font-semibold text-slate-600">
                                     Descripción
@@ -99,8 +99,8 @@ export default function Cargos({ cargos }) {
 
                     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                         <div className="border-b border-slate-200 px-5 py-4">
-                            <h3 className="font-bold text-slate-900">Catálogo de cargos</h3>
-                            <p className="text-xs text-slate-500">{cargos.length} registros</p>
+                            <h3 className="font-bold text-slate-900">Catálogo</h3>
+                            <p className="text-xs text-slate-500">{items.length} registros</p>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
@@ -108,19 +108,24 @@ export default function Cargos({ cargos }) {
                                     <tr>
                                         <th className="px-5 py-3">Nombre</th>
                                         <th className="px-5 py-3">Descripción</th>
-                                        <th className="px-5 py-3">Contratos</th>
+                                        <th className="px-5 py-3">{conteoLabel}</th>
                                         <th className="px-5 py-3">Estado</th>
                                         <th className="px-5 py-3">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {cargos.map((cargo) => (
-                                        <CargoMaestroRow key={cargo.id} cargo={cargo} onEditar={abrirEditar} />
+                                    {items.map((item) => (
+                                        <CatalogoItemRow
+                                            key={item.id}
+                                            item={item}
+                                            routeNames={routeNames}
+                                            onEditar={abrirEditar}
+                                        />
                                     ))}
                                 </tbody>
                             </table>
                         </div>
-                        {!cargos.length && <p className="py-10 text-center text-sm text-slate-500">Aún no hay cargos.</p>}
+                        {!items.length && <p className="py-10 text-center text-sm text-slate-500">Aún no hay registros.</p>}
                     </section>
                 </div>
             </div>

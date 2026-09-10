@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AreaUnidad;
 use App\Models\Cargo;
 use App\Models\RolSistema;
+use App\Models\SedeTrabajo;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -74,6 +76,82 @@ class MaestroContratoController extends Controller
         return back()->with('success', 'Estado del cargo actualizado.');
     }
 
+    public function areas(): Response
+    {
+        return Inertia::render('Contratos/Maestros/Catalogo', [
+            'titulo' => 'Áreas / unidades',
+            'descripcion' => 'Valores disponibles para el área de trabajo del contrato.',
+            'placeholderNombre' => 'Nombre del área o unidad',
+            'items' => AreaUnidad::withCount('contratos')->orderBy('nombre')->get(),
+            'conteoLabel' => 'contratos asociados',
+            'botonNuevo' => '+ Nueva área',
+            'routeNames' => [
+                'store' => 'administracion.contratos.maestros.areas.store',
+                'update' => 'administracion.contratos.maestros.areas.update',
+                'estado' => 'administracion.contratos.maestros.areas.estado',
+            ],
+        ]);
+    }
+
+    public function storeArea(Request $request): RedirectResponse
+    {
+        AreaUnidad::create($this->validarCatalogo($request, 'areas_unidad'));
+
+        return back()->with('success', 'Área agregada al maestro.')->with('registered', true);
+    }
+
+    public function updateArea(Request $request, AreaUnidad $area): RedirectResponse
+    {
+        $area->update($this->validarCatalogo($request, 'areas_unidad', $area->id));
+
+        return back()->with('success', 'Área actualizada.');
+    }
+
+    public function cambiarEstadoArea(Request $request, AreaUnidad $area): RedirectResponse
+    {
+        $area->update($request->validate(['activo' => ['required', 'boolean']]));
+
+        return back()->with('success', 'Estado del área actualizado.');
+    }
+
+    public function sedes(): Response
+    {
+        return Inertia::render('Contratos/Maestros/Catalogo', [
+            'titulo' => 'Sedes de trabajo',
+            'descripcion' => 'Valores disponibles para la sede del contrato.',
+            'placeholderNombre' => 'Nombre de la sede',
+            'items' => SedeTrabajo::withCount('contratos')->orderBy('nombre')->get(),
+            'conteoLabel' => 'contratos asociados',
+            'botonNuevo' => '+ Nueva sede',
+            'routeNames' => [
+                'store' => 'administracion.contratos.maestros.sedes.store',
+                'update' => 'administracion.contratos.maestros.sedes.update',
+                'estado' => 'administracion.contratos.maestros.sedes.estado',
+            ],
+        ]);
+    }
+
+    public function storeSede(Request $request): RedirectResponse
+    {
+        SedeTrabajo::create($this->validarCatalogo($request, 'sedes_trabajo'));
+
+        return back()->with('success', 'Sede agregada al maestro.')->with('registered', true);
+    }
+
+    public function updateSede(Request $request, SedeTrabajo $sede): RedirectResponse
+    {
+        $sede->update($this->validarCatalogo($request, 'sedes_trabajo', $sede->id));
+
+        return back()->with('success', 'Sede actualizada.');
+    }
+
+    public function cambiarEstadoSede(Request $request, SedeTrabajo $sede): RedirectResponse
+    {
+        $sede->update($request->validate(['activo' => ['required', 'boolean']]));
+
+        return back()->with('success', 'Estado de la sede actualizado.');
+    }
+
     public function storeRol(Request $request): RedirectResponse
     {
         RolSistema::create($this->validarRol($request));
@@ -134,6 +212,17 @@ class MaestroContratoController extends Controller
             'descripcion' => ['nullable', 'string', 'max:1000'],
             'modulos' => ['required', 'array', 'min:1'],
             'modulos.*' => ['required', Rule::in(array_keys(self::MODULOS))],
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validarCatalogo(Request $request, string $tabla, ?int $ignorar = null): array
+    {
+        return $request->validate([
+            'nombre' => ['required', 'string', 'max:100', Rule::unique($tabla, 'nombre')->ignore($ignorar)],
+            'descripcion' => ['nullable', 'string', 'max:1000'],
         ]);
     }
 }

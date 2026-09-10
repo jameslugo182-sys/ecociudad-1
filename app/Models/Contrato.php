@@ -12,6 +12,8 @@ class Contrato extends Model
     protected $fillable = [
         'colaborador_id',
         'cargo_id',
+        'area_id',
+        'sede_id',
         'numero',
         'tipo',
         'fecha_inicio',
@@ -45,6 +47,16 @@ class Contrato extends Model
     public function cargo(): BelongsTo
     {
         return $this->belongsTo(Cargo::class);
+    }
+
+    public function areaUnidad(): BelongsTo
+    {
+        return $this->belongsTo(AreaUnidad::class, 'area_id');
+    }
+
+    public function sedeTrabajo(): BelongsTo
+    {
+        return $this->belongsTo(SedeTrabajo::class, 'sede_id');
     }
 
     public function getDocumentoUrlAttribute(): ?string

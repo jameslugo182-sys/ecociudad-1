@@ -15,10 +15,23 @@ class Colaborador extends Model
         'nombres',
         'apellido_paterno',
         'apellido_materno',
+        'sexo',
+        'estado_civil',
+        'nacionalidad',
         'fecha_nacimiento',
         'telefono',
         'email',
         'direccion',
+        'departamento',
+        'provincia',
+        'distrito',
+        'contacto_emergencia',
+        'telefono_emergencia',
+        'nivel_educativo',
+        'institucion_estudios',
+        'especialidad',
+        'grado_titulo',
+        'anio_egreso',
         'activo',
     ];
 
@@ -40,6 +53,11 @@ class Colaborador extends Model
     public function usuario(): HasOne
     {
         return $this->hasOne(User::class);
+    }
+
+    public function horarios(): HasMany
+    {
+        return $this->hasMany(HorarioPersonal::class);
     }
 
     public function getNombreCompletoAttribute(): string

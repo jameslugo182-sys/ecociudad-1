@@ -6,6 +6,7 @@ use App\Http\Controllers\ContratoController;
 use App\Http\Controllers\CuentaColaboradorController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GestionRutasController;
+use App\Http\Controllers\HorarioPersonalController;
 use App\Http\Controllers\LimpiezaController;
 use App\Http\Controllers\MaestroContratoController;
 use App\Http\Controllers\MantenimientoVehiculoController;
@@ -57,6 +58,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::middleware('module:contratos')->group(function () {
                 Route::get('/contratos', [ContratoController::class, 'index'])->name('contratos.index');
                 Route::post('/contratos', [ContratoController::class, 'store'])->name('contratos.store');
+                Route::post('/contratos/formato', [ContratoController::class, 'formato'])->name('contratos.formato');
                 Route::post('/contratos/{contrato}', [ContratoController::class, 'update'])
                     ->whereNumber('contrato')
                     ->name('contratos.update');
@@ -69,6 +71,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     ->name('contratos.usuarios.update');
                 Route::patch('/contratos/usuarios/{user}/estado', [CuentaColaboradorController::class, 'cambiarEstado'])
                     ->name('contratos.usuarios.estado');
+
+                Route::get('/contratos/horarios/plantillas', [HorarioPersonalController::class, 'plantillas'])
+                    ->name('contratos.horarios.plantillas');
+                Route::post('/contratos/horarios/plantillas', [HorarioPersonalController::class, 'storePlantilla'])
+                    ->name('contratos.horarios.plantillas.store');
+                Route::delete('/contratos/horarios/plantillas/{plantilla}', [HorarioPersonalController::class, 'destroyPlantilla'])
+                    ->name('contratos.horarios.plantillas.destroy');
+                Route::get('/contratos/horarios', [HorarioPersonalController::class, 'registro'])
+                    ->name('contratos.horarios.registro');
+                Route::post('/contratos/horarios', [HorarioPersonalController::class, 'storeRegistro'])
+                    ->name('contratos.horarios.registro.store');
+                Route::get('/contratos/horarios/{horario}/pdf', [HorarioPersonalController::class, 'pdf'])
+                    ->whereNumber('horario')
+                    ->name('contratos.horarios.registro.pdf');
 
                 Route::get('/contratos/maestros', [MaestroContratoController::class, 'index'])
                     ->name('contratos.maestros.index');
@@ -88,6 +104,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     ->name('contratos.maestros.roles.update');
                 Route::patch('/contratos/maestros/roles/{rol}/estado', [MaestroContratoController::class, 'cambiarEstadoRol'])
                     ->name('contratos.maestros.roles.estado');
+                Route::get('/contratos/maestros/areas', [MaestroContratoController::class, 'areas'])
+                    ->name('contratos.maestros.areas.index');
+                Route::post('/contratos/maestros/areas', [MaestroContratoController::class, 'storeArea'])
+                    ->name('contratos.maestros.areas.store');
+                Route::put('/contratos/maestros/areas/{area}', [MaestroContratoController::class, 'updateArea'])
+                    ->name('contratos.maestros.areas.update');
+                Route::patch('/contratos/maestros/areas/{area}/estado', [MaestroContratoController::class, 'cambiarEstadoArea'])
+                    ->name('contratos.maestros.areas.estado');
+                Route::get('/contratos/maestros/sedes', [MaestroContratoController::class, 'sedes'])
+                    ->name('contratos.maestros.sedes.index');
+                Route::post('/contratos/maestros/sedes', [MaestroContratoController::class, 'storeSede'])
+                    ->name('contratos.maestros.sedes.store');
+                Route::put('/contratos/maestros/sedes/{sede}', [MaestroContratoController::class, 'updateSede'])
+                    ->name('contratos.maestros.sedes.update');
+                Route::patch('/contratos/maestros/sedes/{sede}/estado', [MaestroContratoController::class, 'cambiarEstadoSede'])
+                    ->name('contratos.maestros.sedes.estado');
             });
 
             Route::middleware('module:vehiculos')->group(function () {

@@ -1,30 +1,32 @@
 import FlashMessage from '@/Components/FlashMessage';
 import Modal from '@/Components/Modal';
 import ModuleLayout from '@/Layouts/ModuleLayout';
+import { navegacionContratos } from '@/navegacionContratos';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
-
-const navegacion = [
-    { label: 'Registro de contratos', href: route('administracion.contratos.index'), active: 'administracion.contratos.index', icon: '01' },
-    { label: 'Creación de usuarios', href: route('administracion.contratos.usuarios.index'), active: 'administracion.contratos.usuarios.*', icon: '02' },
-    {
-        label: 'Maestros',
-        children: [
-            { label: 'Roles', href: route('administracion.contratos.maestros.roles.index'), active: 'administracion.contratos.maestros.roles.*' },
-            { label: 'Cargos', href: route('administracion.contratos.maestros.cargos.index'), active: 'administracion.contratos.maestros.cargos.*' },
-        ],
-    },
-];
 
 const datosIniciales = {
     documento: '',
     nombres: '',
     apellido_paterno: '',
     apellido_materno: '',
+    sexo: '',
+    estado_civil: '',
+    nacionalidad: 'Peruana',
     fecha_nacimiento: '',
     telefono: '',
     email_personal: '',
     direccion: '',
+    departamento: '',
+    provincia: '',
+    distrito: '',
+    contacto_emergencia: '',
+    telefono_emergencia: '',
+    nivel_educativo: '',
+    institucion_estudios: '',
+    especialidad: '',
+    grado_titulo: '',
+    anio_egreso: '',
     numero: '',
     cargo_id: '',
     tipo: 'CAS',
@@ -32,16 +34,40 @@ const datosIniciales = {
     fecha_fin: '',
     remuneracion: '',
     jornada_horas: '48',
-    area: '',
-    sede: '',
+    area_id: '',
+    sede_id: '',
     estado: 'Vigente',
     observaciones: '',
     archivo_contrato: null,
 };
 
-export default function Registro({ contratos, cargos, tipos, estados, filters }) {
+function Campo({ label, error, className = '', children }) {
+    return (
+        <label className={`text-xs font-semibold text-slate-600 ${className}`}>
+            {label}
+            {children}
+            {error && <span className="mt-1 block font-medium text-red-600">{error}</span>}
+        </label>
+    );
+}
+
+const claseInput = 'mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500';
+
+export default function Registro({
+    contratos,
+    cargos,
+    areas = [],
+    sedes = [],
+    tipos,
+    estados,
+    sexos = [],
+    estadosCiviles = [],
+    nivelesEducativos = [],
+    filters,
+}) {
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [editando, setEditando] = useState(null);
+    const [descargandoFormato, setDescargandoFormato] = useState(false);
     const form = useForm(datosIniciales);
     const filtro = useForm({
         buscar: filters.buscar || '',
@@ -63,10 +89,23 @@ export default function Registro({ contratos, cargos, tipos, estados, filters })
             nombres: contrato.colaborador.nombres,
             apellido_paterno: contrato.colaborador.apellido_paterno,
             apellido_materno: contrato.colaborador.apellido_materno || '',
+            sexo: contrato.colaborador.sexo || '',
+            estado_civil: contrato.colaborador.estado_civil || '',
+            nacionalidad: contrato.colaborador.nacionalidad || 'Peruana',
             fecha_nacimiento: contrato.colaborador.fecha_nacimiento?.slice(0, 10) || '',
             telefono: contrato.colaborador.telefono || '',
             email_personal: contrato.colaborador.email || '',
             direccion: contrato.colaborador.direccion || '',
+            departamento: contrato.colaborador.departamento || '',
+            provincia: contrato.colaborador.provincia || '',
+            distrito: contrato.colaborador.distrito || '',
+            contacto_emergencia: contrato.colaborador.contacto_emergencia || '',
+            telefono_emergencia: contrato.colaborador.telefono_emergencia || '',
+            nivel_educativo: contrato.colaborador.nivel_educativo || '',
+            institucion_estudios: contrato.colaborador.institucion_estudios || '',
+            especialidad: contrato.colaborador.especialidad || '',
+            grado_titulo: contrato.colaborador.grado_titulo || '',
+            anio_egreso: contrato.colaborador.anio_egreso || '',
             numero: contrato.numero,
             cargo_id: contrato.cargo_id,
             tipo: contrato.tipo,
@@ -74,8 +113,8 @@ export default function Registro({ contratos, cargos, tipos, estados, filters })
             fecha_fin: contrato.fecha_fin.slice(0, 10),
             remuneracion: contrato.remuneracion || '',
             jornada_horas: contrato.jornada_horas || '',
-            area: contrato.area,
-            sede: contrato.sede || '',
+            area_id: contrato.area_id || '',
+            sede_id: contrato.sede_id || '',
             estado: contrato.estado,
             observaciones: contrato.observaciones || '',
             archivo_contrato: null,
@@ -96,6 +135,47 @@ export default function Registro({ contratos, cargos, tipos, estados, filters })
         });
     };
 
+    const descargarFormato = async () => {
+        form.clearErrors();
+        setDescargandoFormato(true);
+
+        const payload = { ...form.data };
+        delete payload.archivo_contrato;
+
+        try {
+            const response = await window.axios.post(route('administracion.contratos.formato'), payload, {
+                responseType: 'blob',
+            });
+            const url = window.URL.createObjectURL(response.data);
+            const enlace = document.createElement('a');
+            enlace.href = url;
+            enlace.download = `formato-contrato-${form.data.documento || 'colaborador'}.pdf`;
+            document.body.appendChild(enlace);
+            enlace.click();
+            enlace.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            if (error.response?.data instanceof Blob) {
+                const texto = await error.response.data.text();
+                try {
+                    const json = JSON.parse(texto);
+                    if (json.errors) {
+                        const errores = Object.fromEntries(
+                            Object.entries(json.errors).map(([campo, mensajes]) => [campo, mensajes[0]]),
+                        );
+                        form.setError(errores);
+                    }
+                } catch {
+                    form.setError('numero', 'Completa los datos del formulario para generar el formato.');
+                }
+            } else {
+                form.setError('numero', 'No se pudo generar el formato. Revisa los campos obligatorios.');
+            }
+        } finally {
+            setDescargandoFormato(false);
+        }
+    };
+
     const buscar = (event) => {
         event.preventDefault();
         filtro.get(route('administracion.contratos.index'), {
@@ -105,7 +185,7 @@ export default function Registro({ contratos, cargos, tipos, estados, filters })
     };
 
     return (
-        <ModuleLayout moduleName="Gestión de contratos" items={navegacion}>
+        <ModuleLayout moduleName="Gestión de contratos" items={navegacionContratos}>
             <Head title="Registro de contratos" />
 
             <div className="min-h-screen px-5 py-7 sm:px-8 lg:px-10">
@@ -114,7 +194,7 @@ export default function Registro({ contratos, cargos, tipos, estados, filters })
                         <div>
                             <p className="text-sm font-semibold text-emerald-700">Contratos laborales</p>
                             <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">Registro de colaboradores</h2>
-                            <p className="mt-1 text-sm text-slate-500">Registra los datos personales y las condiciones contractuales.</p>
+                            <p className="mt-1 text-sm text-slate-500">Registra los datos personales, estudios y las condiciones contractuales.</p>
                         </div>
                         <button
                             type="button"
@@ -133,7 +213,7 @@ export default function Registro({ contratos, cargos, tipos, estados, filters })
                     <Modal
                         show={mostrarFormulario}
                         maxWidth="7xl"
-                        closeable={!form.processing}
+                        closeable={!form.processing && !descargandoFormato}
                         onClose={cerrarFormulario}
                     >
                         <form onSubmit={guardar} className="max-h-[calc(100vh-3rem)] overflow-y-auto bg-white">
@@ -148,30 +228,89 @@ export default function Registro({ contratos, cargos, tipos, estados, filters })
                             <div className="space-y-7 p-6">
                                 <fieldset>
                                     <legend className="mb-4 text-sm font-bold uppercase tracking-wider text-emerald-700">
-                                        Datos del colaborador
+                                        Datos personales del colaborador
                                     </legend>
                                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                                        {[
-                                            ['documento', 'DNI / documento *', 'text'],
-                                            ['nombres', 'Nombres *', 'text'],
-                                            ['apellido_paterno', 'Apellido paterno *', 'text'],
-                                            ['apellido_materno', 'Apellido materno', 'text'],
-                                            ['fecha_nacimiento', 'Fecha de nacimiento', 'date'],
-                                            ['telefono', 'Teléfono', 'tel'],
-                                            ['email_personal', 'Correo personal', 'email'],
-                                            ['direccion', 'Dirección', 'text'],
-                                        ].map(([campo, label, tipo]) => (
-                                            <label key={campo} className="text-xs font-semibold text-slate-600">
-                                                {label}
-                                                <input
-                                                    type={tipo}
-                                                    value={form.data[campo]}
-                                                    onChange={(event) => form.setData(campo, event.target.value)}
-                                                    className="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
-                                                    required={label.includes('*')}
-                                                />
-                                            </label>
-                                        ))}
+                                        <Campo label="DNI / documento *" error={form.errors.documento}>
+                                            <input type="text" value={form.data.documento} onChange={(event) => form.setData('documento', event.target.value)} className={claseInput} required />
+                                        </Campo>
+                                        <Campo label="Nombres *" error={form.errors.nombres}>
+                                            <input type="text" value={form.data.nombres} onChange={(event) => form.setData('nombres', event.target.value)} className={claseInput} required />
+                                        </Campo>
+                                        <Campo label="Apellido paterno *" error={form.errors.apellido_paterno}>
+                                            <input type="text" value={form.data.apellido_paterno} onChange={(event) => form.setData('apellido_paterno', event.target.value)} className={claseInput} required />
+                                        </Campo>
+                                        <Campo label="Apellido materno" error={form.errors.apellido_materno}>
+                                            <input type="text" value={form.data.apellido_materno} onChange={(event) => form.setData('apellido_materno', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Sexo" error={form.errors.sexo}>
+                                            <select value={form.data.sexo} onChange={(event) => form.setData('sexo', event.target.value)} className={claseInput}>
+                                                <option value="">Seleccionar</option>
+                                                {sexos.map((sexo) => <option key={sexo}>{sexo}</option>)}
+                                            </select>
+                                        </Campo>
+                                        <Campo label="Estado civil" error={form.errors.estado_civil}>
+                                            <select value={form.data.estado_civil} onChange={(event) => form.setData('estado_civil', event.target.value)} className={claseInput}>
+                                                <option value="">Seleccionar</option>
+                                                {estadosCiviles.map((estado) => <option key={estado}>{estado}</option>)}
+                                            </select>
+                                        </Campo>
+                                        <Campo label="Nacionalidad" error={form.errors.nacionalidad}>
+                                            <input type="text" value={form.data.nacionalidad} onChange={(event) => form.setData('nacionalidad', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Fecha de nacimiento" error={form.errors.fecha_nacimiento}>
+                                            <input type="date" value={form.data.fecha_nacimiento} onChange={(event) => form.setData('fecha_nacimiento', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Teléfono" error={form.errors.telefono}>
+                                            <input type="tel" value={form.data.telefono} onChange={(event) => form.setData('telefono', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Correo personal" error={form.errors.email_personal}>
+                                            <input type="email" value={form.data.email_personal} onChange={(event) => form.setData('email_personal', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Dirección" error={form.errors.direccion} className="xl:col-span-2">
+                                            <input type="text" value={form.data.direccion} onChange={(event) => form.setData('direccion', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Departamento" error={form.errors.departamento}>
+                                            <input type="text" value={form.data.departamento} onChange={(event) => form.setData('departamento', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Provincia" error={form.errors.provincia}>
+                                            <input type="text" value={form.data.provincia} onChange={(event) => form.setData('provincia', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Distrito" error={form.errors.distrito}>
+                                            <input type="text" value={form.data.distrito} onChange={(event) => form.setData('distrito', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Contacto de emergencia" error={form.errors.contacto_emergencia}>
+                                            <input type="text" value={form.data.contacto_emergencia} onChange={(event) => form.setData('contacto_emergencia', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Teléfono de emergencia" error={form.errors.telefono_emergencia}>
+                                            <input type="tel" value={form.data.telefono_emergencia} onChange={(event) => form.setData('telefono_emergencia', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                    </div>
+                                </fieldset>
+
+                                <fieldset>
+                                    <legend className="mb-4 text-sm font-bold uppercase tracking-wider text-emerald-700">
+                                        Estudios
+                                    </legend>
+                                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                                        <Campo label="Nivel educativo" error={form.errors.nivel_educativo}>
+                                            <select value={form.data.nivel_educativo} onChange={(event) => form.setData('nivel_educativo', event.target.value)} className={claseInput}>
+                                                <option value="">Seleccionar</option>
+                                                {nivelesEducativos.map((nivel) => <option key={nivel}>{nivel}</option>)}
+                                            </select>
+                                        </Campo>
+                                        <Campo label="Institución" error={form.errors.institucion_estudios}>
+                                            <input type="text" value={form.data.institucion_estudios} onChange={(event) => form.setData('institucion_estudios', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Especialidad / carrera" error={form.errors.especialidad}>
+                                            <input type="text" value={form.data.especialidad} onChange={(event) => form.setData('especialidad', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Grado o título" error={form.errors.grado_titulo}>
+                                            <input type="text" value={form.data.grado_titulo} onChange={(event) => form.setData('grado_titulo', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Año de egreso" error={form.errors.anio_egreso}>
+                                            <input type="number" min="1950" max={new Date().getFullYear() + 1} value={form.data.anio_egreso} onChange={(event) => form.setData('anio_egreso', event.target.value)} className={claseInput} />
+                                        </Campo>
                                     </div>
                                 </fieldset>
 
@@ -180,97 +319,88 @@ export default function Registro({ contratos, cargos, tipos, estados, filters })
                                         Condiciones del contrato
                                     </legend>
                                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                                        <label className="text-xs font-semibold text-slate-600">
-                                            Número de contrato *
-                                            <input
-                                                value={form.data.numero}
-                                                onChange={(event) => form.setData('numero', event.target.value)}
-                                                className="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
-                                                required
-                                            />
-                                        </label>
-                                        <label className="text-xs font-semibold text-slate-600">
-                                            Cargo *
-                                            <select
-                                                value={form.data.cargo_id}
-                                                onChange={(event) => form.setData('cargo_id', event.target.value)}
-                                                className="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
-                                                required
-                                            >
+                                        <Campo label="Número de contrato *" error={form.errors.numero}>
+                                            <input value={form.data.numero} onChange={(event) => form.setData('numero', event.target.value)} className={claseInput} required />
+                                        </Campo>
+                                        <Campo label="Cargo *" error={form.errors.cargo_id}>
+                                            <select value={form.data.cargo_id} onChange={(event) => form.setData('cargo_id', event.target.value)} className={claseInput} required>
                                                 <option value="">Seleccionar cargo</option>
                                                 {cargos.map((cargo) => <option key={cargo.id} value={cargo.id}>{cargo.nombre}</option>)}
                                             </select>
-                                        </label>
-                                        <label className="text-xs font-semibold text-slate-600">
-                                            Modalidad *
-                                            <select
-                                                value={form.data.tipo}
-                                                onChange={(event) => form.setData('tipo', event.target.value)}
-                                                className="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
-                                            >
+                                        </Campo>
+                                        <Campo label="Modalidad *" error={form.errors.tipo}>
+                                            <select value={form.data.tipo} onChange={(event) => form.setData('tipo', event.target.value)} className={claseInput}>
                                                 {tipos.map((tipo) => <option key={tipo}>{tipo}</option>)}
                                             </select>
-                                        </label>
-                                        <label className="text-xs font-semibold text-slate-600">
-                                            Estado *
-                                            <select
-                                                value={form.data.estado}
-                                                onChange={(event) => form.setData('estado', event.target.value)}
-                                                className="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
-                                            >
+                                        </Campo>
+                                        <Campo label="Estado *" error={form.errors.estado}>
+                                            <select value={form.data.estado} onChange={(event) => form.setData('estado', event.target.value)} className={claseInput}>
                                                 {estados.map((estado) => <option key={estado}>{estado}</option>)}
                                             </select>
-                                        </label>
-                                        {[
-                                            ['fecha_inicio', 'Inicio del contrato *', 'date'],
-                                            ['fecha_fin', 'Fin del contrato *', 'date'],
-                                            ['remuneracion', 'Remuneración mensual (S/)', 'number'],
-                                            ['jornada_horas', 'Horas semanales', 'number'],
-                                            ['area', 'Área / unidad *', 'text'],
-                                            ['sede', 'Sede de trabajo', 'text'],
-                                        ].map(([campo, label, tipo]) => (
-                                            <label key={campo} className="text-xs font-semibold text-slate-600">
-                                                {label}
-                                                <input
-                                                    type={tipo}
-                                                    step={campo === 'remuneracion' ? '0.01' : undefined}
-                                                    value={form.data[campo]}
-                                                    onChange={(event) => form.setData(campo, event.target.value)}
-                                                    className="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
-                                                    required={label.includes('*')}
-                                                />
-                                            </label>
-                                        ))}
-                                        <label className="text-xs font-semibold text-slate-600 md:col-span-2">
-                                            Contrato firmado (PDF)
+                                        </Campo>
+                                        <Campo label="Inicio del contrato *" error={form.errors.fecha_inicio}>
+                                            <input type="date" value={form.data.fecha_inicio} onChange={(event) => form.setData('fecha_inicio', event.target.value)} className={claseInput} required />
+                                        </Campo>
+                                        <Campo label="Fin del contrato *" error={form.errors.fecha_fin}>
+                                            <input type="date" value={form.data.fecha_fin} onChange={(event) => form.setData('fecha_fin', event.target.value)} className={claseInput} required />
+                                        </Campo>
+                                        <Campo label="Remuneración mensual (S/)" error={form.errors.remuneracion}>
+                                            <input type="number" step="0.01" value={form.data.remuneracion} onChange={(event) => form.setData('remuneracion', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Horas semanales" error={form.errors.jornada_horas}>
+                                            <input type="number" value={form.data.jornada_horas} onChange={(event) => form.setData('jornada_horas', event.target.value)} className={claseInput} />
+                                        </Campo>
+                                        <Campo label="Área / unidad *" error={form.errors.area_id}>
+                                            <select value={form.data.area_id} onChange={(event) => form.setData('area_id', event.target.value)} className={claseInput} required>
+                                                <option value="">Seleccionar área</option>
+                                                {areas.map((area) => <option key={area.id} value={area.id}>{area.nombre}</option>)}
+                                            </select>
+                                        </Campo>
+                                        <Campo label="Sede de trabajo" error={form.errors.sede_id}>
+                                            <select value={form.data.sede_id} onChange={(event) => form.setData('sede_id', event.target.value)} className={claseInput}>
+                                                <option value="">Seleccionar sede</option>
+                                                {sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.nombre}</option>)}
+                                            </select>
+                                        </Campo>
+                                        <Campo label="Contrato firmado (PDF)" error={form.errors.archivo_contrato} className="md:col-span-2">
                                             <input
                                                 type="file"
                                                 accept="application/pdf"
                                                 onChange={(event) => form.setData('archivo_contrato', event.target.files[0])}
                                                 className="mt-1.5 block w-full rounded-xl border border-slate-300 bg-white p-2 text-sm"
                                             />
-                                        </label>
-                                        <label className="text-xs font-semibold text-slate-600 md:col-span-2">
-                                            Observaciones
+                                            <span className="mt-1 block font-normal text-slate-500">
+                                                Descarga el formato, entrégalo para firma y sube aquí el PDF firmado.
+                                            </span>
+                                        </Campo>
+                                        <Campo label="Observaciones" error={form.errors.observaciones} className="md:col-span-2">
                                             <textarea
                                                 rows="3"
                                                 value={form.data.observaciones}
                                                 onChange={(event) => form.setData('observaciones', event.target.value)}
-                                                className="mt-1.5 w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                                className={claseInput}
                                             />
-                                        </label>
+                                        </Campo>
                                     </div>
                                 </fieldset>
 
-                                {Object.entries(form.errors).map(([campo, error]) => (
+                                {Object.entries(form.errors).filter(([campo]) => !['documento', 'nombres', 'apellido_paterno', 'apellido_materno', 'sexo', 'estado_civil', 'nacionalidad', 'fecha_nacimiento', 'telefono', 'email_personal', 'direccion', 'departamento', 'provincia', 'distrito', 'contacto_emergencia', 'telefono_emergencia', 'nivel_educativo', 'institucion_estudios', 'especialidad', 'grado_titulo', 'anio_egreso', 'numero', 'cargo_id', 'tipo', 'estado', 'fecha_inicio', 'fecha_fin', 'remuneracion', 'jornada_horas', 'area_id', 'sede_id', 'archivo_contrato', 'observaciones'].includes(campo)).map(([campo, error]) => (
                                     <p key={campo} className="text-xs font-medium text-red-600">{error}</p>
                                 ))}
 
-                                <div className="flex justify-end gap-3 border-t border-slate-100 pt-5">
+                                <div className="flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-5">
                                     <button type="button" onClick={cerrarFormulario} className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700">
                                         Cancelar
                                     </button>
-                                    <button type="submit" disabled={form.processing} className="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+                                    <button
+                                        type="button"
+                                        onClick={descargarFormato}
+                                        disabled={descargandoFormato || form.processing}
+                                        className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                                    >
+                                        {descargandoFormato ? 'Generando…' : 'Descargar formato'}
+                                    </button>
+                                    <button type="submit" disabled={form.processing || descargandoFormato} className="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
                                         {form.processing ? 'Guardando…' : 'Guardar contrato'}
                                     </button>
                                 </div>
