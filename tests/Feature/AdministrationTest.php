@@ -174,6 +174,25 @@ class AdministrationTest extends TestCase
             ->assertRedirect()
             ->assertSessionHasNoErrors();
 
+        $this->actingAs($administrador)
+            ->post(route('administracion.contratos.horarios.plantillas.store'), [
+                'nombre' => 'Solo mañana',
+                'turnos' => [
+                    ['clave' => 'manana', 'nombre' => 'Turno mañana', 'inicio' => '07:00', 'fin' => '13:00'],
+                    ['clave' => 'tarde', 'nombre' => 'Turno tarde', 'inicio' => '', 'fin' => ''],
+                    ['clave' => 'noche', 'nombre' => 'Turno noche', 'inicio' => '', 'fin' => ''],
+                ],
+                'dias' => [
+                    1 => [
+                        'manana' => ['inicio' => '07:00', 'fin' => '13:00'],
+                    ],
+                ],
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertEquals(6.0, (float) PlantillaHorario::where('nombre', 'Solo mañana')->firstOrFail()->horas_semanales);
+
         $plantilla = PlantillaHorario::where('nombre', 'Turno completo lunes')->firstOrFail();
         $this->assertEquals(14.0, (float) $plantilla->horas_semanales);
 
@@ -456,6 +475,77 @@ class AdministrationTest extends TestCase
         $this->assertDatabaseHas('reportes', ['id' => $reportes[0]->id, 'estado' => 'En atención']);
     }
 
+    public function test_fleet_route_proposals_are_preview_only_until_a_vehicle_is_assigned(): void
+    {
+        $this->fakeOsrmTrip();
+
+        $administrador = User::factory()->create(['rol' => 'administrador']);
+        $ciudadano = User::factory()->create(['rol' => 'ciudadano']);
+        $equipoUno = User::factory(4)->create(['rol' => 'area_limpieza']);
+        $equipoDos = User::factory(4)->create(['rol' => 'area_limpieza']);
+        $camionUno = Camion::create(['codigo' => 'FLOTA-01', 'placa' => 'FL-101', 'estado' => 'Disponible']);
+        $camionDos = Camion::create(['codigo' => 'FLOTA-02', 'placa' => 'FL-202', 'estado' => 'Disponible']);
+        $camionUno->personal()->attach([
+            $equipoUno[0]->id => ['puesto' => 'conductor'],
+            $equipoUno[1]->id => ['puesto' => 'recolector'],
+            $equipoUno[2]->id => ['puesto' => 'recolector'],
+            $equipoUno[3]->id => ['puesto' => 'recolector'],
+        ]);
+        $camionDos->personal()->attach([
+            $equipoDos[0]->id => ['puesto' => 'conductor'],
+            $equipoDos[1]->id => ['puesto' => 'recolector'],
+            $equipoDos[2]->id => ['puesto' => 'recolector'],
+            $equipoDos[3]->id => ['puesto' => 'recolector'],
+        ]);
+
+        $reportes = collect([
+            [-12.0500, -75.2300],
+            [-12.0508, -75.2290],
+            [-12.0700, -75.2000],
+            [-12.0710, -75.1990],
+        ])->map(fn (array $coordenada, int $indice) => Reporte::create([
+            'user_id' => $ciudadano->id,
+            'foto_path' => 'reportes_fotos/test.jpg',
+            'latitud' => $coordenada[0],
+            'longitud' => $coordenada[1],
+            'descripcion' => "Incidencia flota {$indice}",
+            'estado' => 'Pendiente',
+        ]));
+
+        $respuesta = $this->actingAs($administrador)
+            ->postJson(route('administracion.rutas.proponer'))
+            ->assertOk()
+            ->assertJsonPath('vehiculos', 2)
+            ->assertJsonPath('incidencias', 4);
+
+        $propuestas = $respuesta->json('propuestas');
+        $this->assertCount(2, $propuestas);
+        $this->assertDatabaseCount('rutas_recoleccion', 0);
+        $this->assertDatabaseHas('reportes', ['id' => $reportes[0]->id, 'estado' => 'Pendiente']);
+
+        $primera = $propuestas[0];
+        $this->actingAs($administrador)
+            ->post(route('administracion.rutas.store'), [
+                'camion_id' => $camionUno->id,
+                'fecha' => today()->toDateString(),
+                'reporte_ids' => $primera['reporte_ids'],
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseCount('rutas_recoleccion', 1);
+        $this->assertSame($camionUno->id, RutaRecoleccion::firstOrFail()->camion_id);
+
+        foreach ($reportes as $reporte) {
+            $reporte->refresh();
+            if (in_array($reporte->id, $primera['reporte_ids'], true)) {
+                $this->assertSame('Asignado', $reporte->estado);
+            } else {
+                $this->assertSame('Pendiente', $reporte->estado);
+            }
+        }
+    }
+
     public function test_administrator_can_assign_a_collection_schedule_to_an_assigned_fleet_route(): void
     {
         $this->fakeOsrmTrip();
@@ -506,6 +596,14 @@ class AdministrationTest extends TestCase
                 ->where('rutas.0.horario_resumen', null));
 
         $this->actingAs($administrador)
+            ->get(route('administracion.rutas.cronograma'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Rutas/Cronograma')
+                ->has('rutas', 0)
+                ->has('mes'));
+
+        $this->actingAs($administrador)
             ->patch(route('administracion.rutas.horario', $ruta), [
                 'hora_inicio' => '07:00',
                 'hora_fin' => '11:30',
@@ -520,6 +618,16 @@ class AdministrationTest extends TestCase
         $this->assertSame('11:30', $ruta->hora_fin);
         $this->assertSame([1, 3, 5], $ruta->dias_recoleccion);
         $this->assertSame('Lun, Mié, Vie · 07:00–11:30', $ruta->horario_resumen);
+
+        $this->actingAs($administrador)
+            ->get(route('administracion.rutas.cronograma'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Rutas/Cronograma')
+                ->has('rutas', 1)
+                ->where('rutas.0.id', $ruta->id)
+                ->where('rutas.0.horario_resumen', 'Lun, Mié, Vie · 07:00–11:30')
+                ->has('mes'));
 
         $this->actingAs($personal[1])
             ->get(route('limpieza.rutas.index'))

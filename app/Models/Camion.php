@@ -47,6 +47,15 @@ class Camion extends Model
             ->withTimestamps();
     }
 
+    public function tieneEquipoCompleto(): bool
+    {
+        $this->loadMissing('personal');
+
+        return $this->personal->count() === 4
+            && $this->personal->where('pivot.puesto', 'conductor')->count() === 1
+            && $this->personal->where('pivot.puesto', 'recolector')->count() === 3;
+    }
+
     public function rutas(): HasMany
     {
         return $this->hasMany(RutaRecoleccion::class);

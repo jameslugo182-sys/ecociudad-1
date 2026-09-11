@@ -164,9 +164,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/rutas/horarios', [GestionRutasController::class, 'horarios'])
                 ->middleware('module:rutas')
                 ->name('rutas.horarios');
+            Route::get('/rutas/cronograma', [GestionRutasController::class, 'cronograma'])
+                ->middleware('module:rutas')
+                ->name('rutas.cronograma');
             Route::post('/rutas', [GestionRutasController::class, 'store'])
                 ->middleware('module:rutas')
                 ->name('rutas.store');
+            Route::post('/rutas/proponer', [GestionRutasController::class, 'proponer'])
+                ->middleware('module:rutas')
+                ->name('rutas.proponer');
             Route::patch('/rutas/{ruta}/horario', [GestionRutasController::class, 'actualizarHorario'])
                 ->middleware('module:rutas')
                 ->name('rutas.horario');
@@ -193,7 +199,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('rutas.generar');
             Route::get('/rutas', [GestionRutasController::class, 'index'])->name('rutas.index');
             Route::get('/rutas/horarios', [GestionRutasController::class, 'horarios'])->name('rutas.horarios');
+            Route::get('/rutas/cronograma', [GestionRutasController::class, 'cronograma'])->name('rutas.cronograma');
             Route::post('/rutas', [GestionRutasController::class, 'store'])->name('rutas.store');
+            Route::post('/rutas/proponer', [GestionRutasController::class, 'proponer'])->name('rutas.proponer');
             Route::patch('/rutas/{ruta}/horario', [GestionRutasController::class, 'actualizarHorario'])
                 ->name('rutas.horario');
             Route::patch('/rutas/{ruta}/cancelar', [GestionRutasController::class, 'cancelar'])

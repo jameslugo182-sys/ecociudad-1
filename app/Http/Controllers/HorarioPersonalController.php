@@ -142,8 +142,8 @@ class HorarioPersonalController extends Controller
             'turnos' => ['required', 'array', 'min:1'],
             'turnos.*.clave' => ['required', 'string', 'max:40'],
             'turnos.*.nombre' => ['required', 'string', 'max:80'],
-            'turnos.*.inicio' => ['required', 'date_format:H:i'],
-            'turnos.*.fin' => ['required', 'date_format:H:i'],
+            'turnos.*.inicio' => ['nullable', 'date_format:H:i'],
+            'turnos.*.fin' => ['nullable', 'date_format:H:i'],
             'dias' => ['required', 'array'],
             'vigencia_inicio' => ['nullable', 'date'],
             'vigencia_fin' => ['nullable', 'date', 'after_or_equal:vigencia_inicio'],
@@ -175,8 +175,8 @@ class HorarioPersonalController extends Controller
     private function normalizarHoras(Request $request): void
     {
         $turnos = collect($request->input('turnos', []))->map(function ($turno) {
-            $turno['inicio'] = substr((string) ($turno['inicio'] ?? ''), 0, 5);
-            $turno['fin'] = substr((string) ($turno['fin'] ?? ''), 0, 5);
+            $turno['inicio'] = $this->horaOpcional($turno['inicio'] ?? null);
+            $turno['fin'] = $this->horaOpcional($turno['fin'] ?? null);
 
             return $turno;
         })->all();
@@ -185,9 +185,16 @@ class HorarioPersonalController extends Controller
         foreach ($request->input('dias', []) as $dia => $turnosDelDia) {
             $dias[$dia] = [];
             foreach ((array) $turnosDelDia as $clave => $turno) {
+                $inicio = $this->horaOpcional($turno['inicio'] ?? null);
+                $fin = $this->horaOpcional($turno['fin'] ?? null);
+
+                if (! $inicio || ! $fin) {
+                    continue;
+                }
+
                 $dias[$dia][$clave] = [
-                    'inicio' => substr((string) ($turno['inicio'] ?? ''), 0, 5),
-                    'fin' => substr((string) ($turno['fin'] ?? ''), 0, 5),
+                    'inicio' => $inicio,
+                    'fin' => $fin,
                 ];
             }
         }
@@ -196,5 +203,12 @@ class HorarioPersonalController extends Controller
             'turnos' => $turnos,
             'dias' => $dias,
         ]);
+    }
+
+    private function horaOpcional(mixed $hora): ?string
+    {
+        $hora = substr((string) $hora, 0, 5);
+
+        return preg_match('/^\d{2}:\d{2}$/', $hora) ? $hora : null;
     }
 }

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Camion;
 use App\Models\Reporte;
 use App\Models\RutaRecoleccion;
+use App\Services\PlanificadorFlotaService;
 use App\Services\TrazadoRutaService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,26 +21,18 @@ class GestionRutasController extends Controller
     public function index(Request $request): Response
     {
         return Inertia::render('Rutas/Index', [
-            'reportes' => Reporte::query()
-                ->with('user:id,name')
-                ->where('estado', '!=', 'Atendido')
-                ->whereDoesntHave(
-                    'rutas',
-                    fn ($query) => $query->whereIn('rutas_recoleccion.estado', ['Planificada', 'En curso'])
-                )
-                ->latest()
-                ->get([
-                    'id',
-                    'user_id',
-                    'foto_path',
-                    'latitud',
-                    'longitud',
-                    'descripcion',
-                    'estado',
-                    'tipo_incidencia',
-                    'prioridad',
-                    'created_at',
-                ]),
+            'reportes' => $this->reportesDisponibles()->get([
+                'id',
+                'user_id',
+                'foto_path',
+                'latitud',
+                'longitud',
+                'descripcion',
+                'estado',
+                'tipo_incidencia',
+                'prioridad',
+                'created_at',
+            ]),
             'equipos' => Camion::query()
                 ->with(['personal' => fn ($query) => $query->select('users.id', 'name')])
                 ->where('estado', 'Disponible')
@@ -74,6 +68,34 @@ class GestionRutasController extends Controller
                 ->latest('fecha')
                 ->latest()
                 ->get(),
+            'routeNames' => $this->routeNames($request),
+        ]);
+    }
+
+    public function cronograma(Request $request): Response
+    {
+        $validated = $request->validate([
+            'mes' => ['nullable', 'date_format:Y-m'],
+        ]);
+
+        $mes = $validated['mes'] ?? now()->format('Y-m');
+
+        return Inertia::render('Rutas/Cronograma', [
+            'mes' => $mes,
+            'rutas' => RutaRecoleccion::query()
+                ->whereIn('estado', ['Planificada', 'En curso'])
+                ->whereNotNull('hora_inicio')
+                ->whereNotNull('hora_fin')
+                ->whereNotNull('dias_recoleccion')
+                ->with([
+                    'camion:id,codigo,placa',
+                    'reportes:id',
+                ])
+                ->latest('fecha')
+                ->latest()
+                ->get()
+                ->filter(fn (RutaRecoleccion $ruta) => filled($ruta->horario_resumen))
+                ->values(),
             'routeNames' => $this->routeNames($request),
         ]);
     }
@@ -127,9 +149,7 @@ class GestionRutasController extends Controller
 
         $camion = Camion::with('personal')->findOrFail($validated['camion_id']);
 
-        if ($camion->personal->count() !== 4
-            || $camion->personal->where('pivot.puesto', 'conductor')->count() !== 1
-            || $camion->personal->where('pivot.puesto', 'recolector')->count() !== 3) {
+        if (! $camion->tieneEquipoCompleto()) {
             throw ValidationException::withMessages([
                 'camion_id' => 'El vehículo debe tener un conductor y tres recolectores.',
             ]);
@@ -207,6 +227,49 @@ class GestionRutasController extends Controller
         return back()->with('success', 'Ruta cancelada; las incidencias volvieron a estar disponibles.');
     }
 
+    public function proponer(Request $request): JsonResponse
+    {
+        $reportes = $this->reportesDisponibles()->get();
+        $vehiculos = Camion::query()
+            ->with('personal')
+            ->where('estado', 'Disponible')
+            ->get()
+            ->filter(fn (Camion $camion) => $camion->tieneEquipoCompleto())
+            ->count();
+
+        if ($reportes->isEmpty()) {
+            throw ValidationException::withMessages([
+                'reportes' => 'No hay incidencias disponibles para generar recorridos.',
+            ]);
+        }
+
+        if ($vehiculos < 1) {
+            throw ValidationException::withMessages([
+                'equipos' => 'Necesitas al menos un vehículo con equipo completo (1 conductor y 3 recolectores).',
+            ]);
+        }
+
+        $propuestas = app(PlanificadorFlotaService::class)->proponer($reportes->all(), $vehiculos);
+
+        return response()->json([
+            'vehiculos' => $vehiculos,
+            'incidencias' => $reportes->count(),
+            'propuestas' => $propuestas,
+        ]);
+    }
+
+    private function reportesDisponibles()
+    {
+        return Reporte::query()
+            ->with('user:id,name')
+            ->where('estado', '!=', 'Atendido')
+            ->whereDoesntHave(
+                'rutas',
+                fn ($query) => $query->whereIn('rutas_recoleccion.estado', ['Planificada', 'En curso'])
+            )
+            ->latest();
+    }
+
     /**
      * @return array<string, string>
      */
@@ -217,9 +280,11 @@ class GestionRutasController extends Controller
         return [
             'index' => $esAdministracion ? 'administracion.rutas.index' : 'admin.rutas.index',
             'store' => $esAdministracion ? 'administracion.rutas.store' : 'admin.rutas.store',
+            'proponer' => $esAdministracion ? 'administracion.rutas.proponer' : 'admin.rutas.proponer',
             'cancelar' => $esAdministracion ? 'administracion.rutas.cancelar' : 'admin.rutas.cancelar',
             'horarios' => $esAdministracion ? 'administracion.rutas.horarios' : 'admin.rutas.horarios',
             'horario' => $esAdministracion ? 'administracion.rutas.horario' : 'admin.rutas.horario',
+            'cronograma' => $esAdministracion ? 'administracion.rutas.cronograma' : 'admin.rutas.cronograma',
         ];
     }
 }
