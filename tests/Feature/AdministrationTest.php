@@ -32,7 +32,7 @@ class AdministrationTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Panel')
-                ->has('modulos', 5));
+                ->has('modulos', 6));
 
         $this->actingAs($administrador)
             ->get(route('administracion.incidencias.mapa'))
@@ -53,20 +53,7 @@ class AdministrationTest extends TestCase
         $area = AreaUnidad::where('nombre', 'Limpieza pública')->firstOrFail();
 
         $this->actingAs($administrador)
-            ->post(route('administracion.contratos.store'), [
-                'documento' => '72345678',
-                'nombres' => 'Operario',
-                'apellido_paterno' => 'Municipal',
-                'sexo' => 'Masculino',
-                'nivel_educativo' => 'Secundaria',
-                'numero' => 'CON-2026-001',
-                'cargo_id' => $cargo->id,
-                'tipo' => 'CAS',
-                'fecha_inicio' => today()->subDay()->toDateString(),
-                'fecha_fin' => today()->addYear()->toDateString(),
-                'area_id' => $area->id,
-                'estado' => 'Vigente',
-            ])
+            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo->id, $area->id))
             ->assertRedirect()
             ->assertSessionHasNoErrors();
 
@@ -110,7 +97,7 @@ class AdministrationTest extends TestCase
         $area = AreaUnidad::where('nombre', 'Limpieza pública')->firstOrFail();
 
         $response = $this->actingAs($administrador)
-            ->post(route('administracion.contratos.formato'), [
+            ->post(route('administracion.contratos.formato'), $this->payloadContrato($cargo->id, $area->id, [
                 'documento' => '87654321',
                 'nombres' => 'Ana',
                 'apellido_paterno' => 'Quispe',
@@ -118,13 +105,9 @@ class AdministrationTest extends TestCase
                 'sexo' => 'Femenino',
                 'nivel_educativo' => 'Universitario',
                 'numero' => 'CON-2026-PDF',
-                'cargo_id' => $cargo->id,
-                'tipo' => 'CAS',
                 'fecha_inicio' => today()->toDateString(),
                 'fecha_fin' => today()->addMonths(6)->toDateString(),
-                'area_id' => $area->id,
-                'estado' => 'Vigente',
-            ]);
+            ]));
 
         $response->assertOk();
         $this->assertStringContainsString('pdf', strtolower((string) $response->headers->get('content-type')));
@@ -138,18 +121,13 @@ class AdministrationTest extends TestCase
         $area = AreaUnidad::where('nombre', 'Limpieza pública')->firstOrFail();
 
         $this->actingAs($administrador)
-            ->post(route('administracion.contratos.store'), [
+            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo->id, $area->id, [
                 'documento' => '70111222',
                 'nombres' => 'Luis',
                 'apellido_paterno' => 'Paredes',
                 'numero' => 'CON-2026-HOR',
-                'cargo_id' => $cargo->id,
-                'tipo' => 'CAS',
                 'fecha_inicio' => today()->toDateString(),
-                'fecha_fin' => today()->addYear()->toDateString(),
-                'area_id' => $area->id,
-                'estado' => 'Vigente',
-            ])
+            ]))
             ->assertSessionHasNoErrors();
 
         $turnos = [
@@ -662,9 +640,6 @@ class AdministrationTest extends TestCase
         $this->assertGuest();
     }
 
-    /**
-     * @return void
-     */
     private function fakeOsrmTrip(): void
     {
         Http::fake([

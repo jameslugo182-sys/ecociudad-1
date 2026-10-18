@@ -46,6 +46,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
                 'registered' => fn () => (bool) $request->session()->get('registered'),
+                'device_token' => fn () => $request->session()->get('device_token'),
             ],
         ];
     }

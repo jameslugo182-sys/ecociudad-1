@@ -71,6 +71,7 @@ export default function CamionAdminCard({ camion, personalLimpieza }) {
                         value={equipo.data.conductor_id}
                         onChange={(event) => equipo.setData('conductor_id', event.target.value)}
                         className="w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                        required
                     >
                         <option value="">Seleccionar conductor</option>
                         {personalLimpieza.map((persona) => (
@@ -91,6 +92,7 @@ export default function CamionAdminCard({ camion, personalLimpieza }) {
                                 value={recolectorId}
                                 onChange={(event) => cambiarRecolector(indice, event.target.value)}
                                 className="w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                required
                             >
                                 <option value="">Seleccionar</option>
                                 {personalLimpieza.map((persona) => (

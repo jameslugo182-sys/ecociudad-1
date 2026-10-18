@@ -22,6 +22,7 @@ class MaestroContratoController extends Controller
         'vehiculos' => 'Vehículos',
         'rutas' => 'Gestión de rutas',
         'reportes' => 'Reportes',
+        'tachos' => 'Tachos IoT',
         'operaciones' => 'Operaciones de limpieza',
     ];
 
@@ -49,10 +50,7 @@ class MaestroContratoController extends Controller
 
     public function storeCargo(Request $request): RedirectResponse
     {
-        Cargo::create($request->validate([
-            'nombre' => ['required', 'string', 'max:100', 'unique:cargos,nombre'],
-            'descripcion' => ['nullable', 'string', 'max:1000'],
-        ]));
+        Cargo::create($this->validarCatalogo($request, 'cargos'));
 
         return back()
             ->with('success', 'Cargo agregado al maestro.')
@@ -61,10 +59,7 @@ class MaestroContratoController extends Controller
 
     public function updateCargo(Request $request, Cargo $cargo): RedirectResponse
     {
-        $cargo->update($request->validate([
-            'nombre' => ['required', 'string', 'max:100', Rule::unique('cargos', 'nombre')->ignore($cargo)],
-            'descripcion' => ['nullable', 'string', 'max:1000'],
-        ]));
+        $cargo->update($this->validarCatalogo($request, 'cargos', $cargo->id));
 
         return back()->with('success', 'Cargo actualizado.');
     }
@@ -212,6 +207,12 @@ class MaestroContratoController extends Controller
             'descripcion' => ['nullable', 'string', 'max:1000'],
             'modulos' => ['required', 'array', 'min:1'],
             'modulos.*' => ['required', Rule::in(array_keys(self::MODULOS))],
+        ], [
+            'nombre.required' => 'Ingresa el nombre del rol.',
+            'codigo.required' => 'Ingresa el código interno.',
+            'codigo.regex' => 'El código debe empezar con una letra y solo usar minúsculas, números o guion bajo.',
+            'modulos.required' => 'Selecciona al menos un módulo.',
+            'modulos.min' => 'Selecciona al menos un módulo.',
         ]);
     }
 
@@ -221,8 +222,12 @@ class MaestroContratoController extends Controller
     private function validarCatalogo(Request $request, string $tabla, ?int $ignorar = null): array
     {
         return $request->validate([
-            'nombre' => ['required', 'string', 'max:100', Rule::unique($tabla, 'nombre')->ignore($ignorar)],
+            'nombre' => ['required', 'string', 'min:2', 'max:100', Rule::unique($tabla, 'nombre')->ignore($ignorar)],
             'descripcion' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'nombre.required' => 'Ingresa el nombre.',
+            'nombre.min' => 'El nombre debe tener al menos 2 caracteres.',
+            'nombre.unique' => 'Ya existe un registro con ese nombre.',
         ]);
     }
 }

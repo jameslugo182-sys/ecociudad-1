@@ -232,7 +232,7 @@ export default function Registro({
                                     </legend>
                                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                                         <Campo label="DNI / documento *" error={form.errors.documento}>
-                                            <input type="text" value={form.data.documento} onChange={(event) => form.setData('documento', event.target.value)} className={claseInput} required />
+                                            <input type="text" inputMode="numeric" maxLength={12} value={form.data.documento} onChange={(event) => form.setData('documento', event.target.value.replace(/\D/g, ''))} className={claseInput} required />
                                         </Campo>
                                         <Campo label="Nombres *" error={form.errors.nombres}>
                                             <input type="text" value={form.data.nombres} onChange={(event) => form.setData('nombres', event.target.value)} className={claseInput} required />
@@ -240,11 +240,11 @@ export default function Registro({
                                         <Campo label="Apellido paterno *" error={form.errors.apellido_paterno}>
                                             <input type="text" value={form.data.apellido_paterno} onChange={(event) => form.setData('apellido_paterno', event.target.value)} className={claseInput} required />
                                         </Campo>
-                                        <Campo label="Apellido materno" error={form.errors.apellido_materno}>
-                                            <input type="text" value={form.data.apellido_materno} onChange={(event) => form.setData('apellido_materno', event.target.value)} className={claseInput} />
+                                        <Campo label="Apellido materno *" error={form.errors.apellido_materno}>
+                                            <input type="text" value={form.data.apellido_materno} onChange={(event) => form.setData('apellido_materno', event.target.value)} className={claseInput} required />
                                         </Campo>
-                                        <Campo label="Sexo" error={form.errors.sexo}>
-                                            <select value={form.data.sexo} onChange={(event) => form.setData('sexo', event.target.value)} className={claseInput}>
+                                        <Campo label="Sexo *" error={form.errors.sexo}>
+                                            <select value={form.data.sexo} onChange={(event) => form.setData('sexo', event.target.value)} className={claseInput} required>
                                                 <option value="">Seleccionar</option>
                                                 {sexos.map((sexo) => <option key={sexo}>{sexo}</option>)}
                                             </select>
@@ -255,20 +255,20 @@ export default function Registro({
                                                 {estadosCiviles.map((estado) => <option key={estado}>{estado}</option>)}
                                             </select>
                                         </Campo>
-                                        <Campo label="Nacionalidad" error={form.errors.nacionalidad}>
-                                            <input type="text" value={form.data.nacionalidad} onChange={(event) => form.setData('nacionalidad', event.target.value)} className={claseInput} />
+                                        <Campo label="Nacionalidad *" error={form.errors.nacionalidad}>
+                                            <input type="text" value={form.data.nacionalidad} onChange={(event) => form.setData('nacionalidad', event.target.value)} className={claseInput} required />
                                         </Campo>
                                         <Campo label="Fecha de nacimiento" error={form.errors.fecha_nacimiento}>
                                             <input type="date" value={form.data.fecha_nacimiento} onChange={(event) => form.setData('fecha_nacimiento', event.target.value)} className={claseInput} />
                                         </Campo>
-                                        <Campo label="Teléfono" error={form.errors.telefono}>
-                                            <input type="tel" value={form.data.telefono} onChange={(event) => form.setData('telefono', event.target.value)} className={claseInput} />
+                                        <Campo label="Teléfono *" error={form.errors.telefono}>
+                                            <input type="tel" value={form.data.telefono} onChange={(event) => form.setData('telefono', event.target.value)} className={claseInput} required />
                                         </Campo>
                                         <Campo label="Correo personal" error={form.errors.email_personal}>
                                             <input type="email" value={form.data.email_personal} onChange={(event) => form.setData('email_personal', event.target.value)} className={claseInput} />
                                         </Campo>
-                                        <Campo label="Dirección" error={form.errors.direccion} className="xl:col-span-2">
-                                            <input type="text" value={form.data.direccion} onChange={(event) => form.setData('direccion', event.target.value)} className={claseInput} />
+                                        <Campo label="Dirección *" error={form.errors.direccion} className="xl:col-span-2">
+                                            <input type="text" value={form.data.direccion} onChange={(event) => form.setData('direccion', event.target.value)} className={claseInput} required />
                                         </Campo>
                                         <Campo label="Departamento" error={form.errors.departamento}>
                                             <input type="text" value={form.data.departamento} onChange={(event) => form.setData('departamento', event.target.value)} className={claseInput} />
@@ -344,11 +344,11 @@ export default function Registro({
                                         <Campo label="Fin del contrato *" error={form.errors.fecha_fin}>
                                             <input type="date" value={form.data.fecha_fin} onChange={(event) => form.setData('fecha_fin', event.target.value)} className={claseInput} required />
                                         </Campo>
-                                        <Campo label="Remuneración mensual (S/)" error={form.errors.remuneracion}>
-                                            <input type="number" step="0.01" value={form.data.remuneracion} onChange={(event) => form.setData('remuneracion', event.target.value)} className={claseInput} />
+                                        <Campo label="Remuneración mensual (S/) *" error={form.errors.remuneracion}>
+                                            <input type="number" step="0.01" min="0" value={form.data.remuneracion} onChange={(event) => form.setData('remuneracion', event.target.value)} className={claseInput} required />
                                         </Campo>
-                                        <Campo label="Horas semanales" error={form.errors.jornada_horas}>
-                                            <input type="number" value={form.data.jornada_horas} onChange={(event) => form.setData('jornada_horas', event.target.value)} className={claseInput} />
+                                        <Campo label="Horas semanales *" error={form.errors.jornada_horas}>
+                                            <input type="number" min="1" max="168" value={form.data.jornada_horas} onChange={(event) => form.setData('jornada_horas', event.target.value)} className={claseInput} required />
                                         </Campo>
                                         <Campo label="Área / unidad *" error={form.errors.area_id}>
                                             <select value={form.data.area_id} onChange={(event) => form.setData('area_id', event.target.value)} className={claseInput} required>

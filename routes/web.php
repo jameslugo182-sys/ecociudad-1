@@ -14,6 +14,7 @@ use App\Http\Controllers\MapaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\ReporteMetricasController;
+use App\Http\Controllers\TachoController;
 use App\Http\Controllers\TipoMantenimientoController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -182,6 +183,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/reportes', [ReporteMetricasController::class, 'index'])
                 ->middleware('module:reportes')
                 ->name('reportes.index');
+
+            Route::middleware('module:tachos')->group(function () {
+                Route::get('/tachos', [TachoController::class, 'index'])->name('tachos.index');
+                Route::get('/tachos/mapa', [TachoController::class, 'mapa'])->name('tachos.mapa');
+                Route::post('/tachos', [TachoController::class, 'store'])->name('tachos.store');
+                Route::put('/tachos/{tacho}', [TachoController::class, 'update'])->name('tachos.update');
+                Route::post('/tachos/{tacho}/token', [TachoController::class, 'regenerarToken'])
+                    ->name('tachos.token');
+                Route::post('/tachos/{tacho}/ruta', [TachoController::class, 'agregarARuta'])
+                    ->name('tachos.ruta');
+            });
         });
 
     Route::prefix('admin')

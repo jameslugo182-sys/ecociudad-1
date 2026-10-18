@@ -183,12 +183,13 @@ class CamionController extends Controller
                 'required',
                 'string',
                 'max:10',
+                'regex:/^[A-Z0-9]{1,4}-[A-Z0-9]{2,4}$/',
                 Rule::unique('camiones', 'placa')->ignore($camion),
             ],
-            'marca' => ['nullable', 'string', 'max:80'],
-            'modelo' => ['nullable', 'string', 'max:80'],
-            'anio' => ['nullable', 'integer', 'min:1980', 'max:'.(now()->year + 1)],
-            'capacidad_kg' => ['nullable', 'integer', 'min:1', 'max:100000'],
+            'marca' => ['required', 'string', 'min:2', 'max:80'],
+            'modelo' => ['required', 'string', 'min:1', 'max:80'],
+            'anio' => ['required', 'integer', 'min:1980', 'max:'.(now()->year + 1)],
+            'capacidad_kg' => ['required', 'integer', 'min:1', 'max:100000'],
             'estado' => ['required', Rule::in(self::ESTADOS)],
             'foto' => [
                 $camion ? 'nullable' : 'required',
@@ -196,6 +197,17 @@ class CamionController extends Controller
                 'mimes:jpeg,png,jpg,webp',
                 'max:5120',
             ],
+        ], [
+            'placa.required' => 'Ingresa la placa del vehículo.',
+            'placa.regex' => 'La placa debe tener formato ABC-123.',
+            'placa.unique' => 'Ya existe un vehículo con esa placa.',
+            'marca.required' => 'Ingresa la marca.',
+            'modelo.required' => 'Ingresa el modelo.',
+            'anio.required' => 'Ingresa el año de fabricación.',
+            'capacidad_kg.required' => 'Ingresa la capacidad en kilogramos.',
+            'foto.required' => 'Sube una fotografía del vehículo.',
+            'foto.image' => 'La foto debe ser una imagen JPG, PNG o WEBP.',
+            'foto.max' => 'La foto no debe pesar más de 5 MB.',
         ]);
     }
 

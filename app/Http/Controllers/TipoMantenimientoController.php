@@ -24,8 +24,11 @@ class TipoMantenimientoController extends Controller
     public function store(Request $request): RedirectResponse
     {
         TipoMantenimiento::create($request->validate([
-            'nombre' => ['required', 'string', 'max:100', 'unique:tipos_mantenimiento,nombre'],
+            'nombre' => ['required', 'string', 'min:2', 'max:100', 'unique:tipos_mantenimiento,nombre'],
             'descripcion' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'nombre.required' => 'Ingresa el nombre del tipo de mantenimiento.',
+            'nombre.unique' => 'Ya existe un tipo con ese nombre.',
         ]));
 
         return back()
@@ -36,8 +39,11 @@ class TipoMantenimientoController extends Controller
     public function update(Request $request, TipoMantenimiento $tipo): RedirectResponse
     {
         $tipo->update($request->validate([
-            'nombre' => ['required', 'string', 'max:100', Rule::unique('tipos_mantenimiento', 'nombre')->ignore($tipo)],
+            'nombre' => ['required', 'string', 'min:2', 'max:100', Rule::unique('tipos_mantenimiento', 'nombre')->ignore($tipo)],
             'descripcion' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'nombre.required' => 'Ingresa el nombre del tipo de mantenimiento.',
+            'nombre.unique' => 'Ya existe un tipo con ese nombre.',
         ]));
 
         return back()->with('success', 'Tipo de mantenimiento actualizado.');

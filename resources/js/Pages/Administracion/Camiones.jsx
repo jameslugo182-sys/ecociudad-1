@@ -190,59 +190,77 @@ export default function Camiones({ camiones, filters, estados, siguienteCodigo }
                                             <input
                                                 value={form.data.placa}
                                                 onChange={(event) => form.setData('placa', event.target.value.toUpperCase())}
+                                                placeholder="ABC-123"
+                                                maxLength={10}
                                                 className="mt-1.5 w-full rounded-lg border-slate-300 text-sm uppercase focus:border-emerald-500 focus:ring-emerald-500"
                                                 required
                                             />
+                                            {form.errors.placa && <span className="mt-1 block font-medium text-red-600">{form.errors.placa}</span>}
                                         </label>
                                         <label className="text-xs font-semibold text-slate-600">
-                                            4. Marca
+                                            4. Marca *
                                             <input
                                                 value={form.data.marca}
                                                 onChange={(event) => form.setData('marca', event.target.value)}
                                                 className="mt-1.5 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                                required
+                                                minLength={2}
                                             />
+                                            {form.errors.marca && <span className="mt-1 block font-medium text-red-600">{form.errors.marca}</span>}
                                         </label>
                                         <label className="text-xs font-semibold text-slate-600">
-                                            5. Modelo
+                                            5. Modelo *
                                             <input
                                                 value={form.data.modelo}
                                                 onChange={(event) => form.setData('modelo', event.target.value)}
                                                 className="mt-1.5 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                                required
                                             />
+                                            {form.errors.modelo && <span className="mt-1 block font-medium text-red-600">{form.errors.modelo}</span>}
                                         </label>
                                         <label className="text-xs font-semibold text-slate-600">
-                                            6. Año
+                                            6. Año *
                                             <input
                                                 type="number"
+                                                min="1980"
+                                                max={new Date().getFullYear() + 1}
                                                 value={form.data.anio}
                                                 onChange={(event) => form.setData('anio', event.target.value)}
                                                 className="mt-1.5 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                                required
                                             />
+                                            {form.errors.anio && <span className="mt-1 block font-medium text-red-600">{form.errors.anio}</span>}
                                         </label>
                                         <label className="text-xs font-semibold text-slate-600">
-                                            7. Capacidad
+                                            7. Capacidad (kg) *
                                             <input
                                                 type="number"
+                                                min="1"
+                                                max="100000"
                                                 value={form.data.capacidad_kg}
                                                 onChange={(event) => form.setData('capacidad_kg', event.target.value)}
                                                 placeholder="kg"
                                                 className="mt-1.5 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                                required
                                             />
+                                            {form.errors.capacidad_kg && <span className="mt-1 block font-medium text-red-600">{form.errors.capacidad_kg}</span>}
                                         </label>
                                         <label className="text-xs font-semibold text-slate-600 sm:col-span-2">
-                                            8. Estado
+                                            8. Estado *
                                             <select
                                                 value={form.data.estado}
                                                 onChange={(event) => form.setData('estado', event.target.value)}
                                                 className="mt-1.5 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                                required
                                             >
                                                 {estados.map((estado) => <option key={estado}>{estado}</option>)}
                                             </select>
+                                            {form.errors.estado && <span className="mt-1 block font-medium text-red-600">{form.errors.estado}</span>}
                                         </label>
                                     </div>
 
                                     {Object.entries(form.errors)
-                                        .filter(([campo]) => campo !== 'foto')
+                                        .filter(([campo]) => !['foto', 'placa', 'marca', 'modelo', 'anio', 'capacidad_kg', 'estado'].includes(campo))
                                         .map(([campo, error]) => (
                                             <p key={campo} className="text-xs font-medium text-red-600">{error}</p>
                                         ))}

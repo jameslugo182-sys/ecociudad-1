@@ -228,6 +228,11 @@ export default function Create() {
                                         />
                                     </div>
                                 )}
+                                {errors.tipo_incidencia && (
+                                    <div className="text-red-500 text-xs font-semibold">
+                                        {errors.tipo_incidencia}
+                                    </div>
+                                )}
                                 {errors.descripcion && (
                                     <div className="text-red-500 text-xs font-semibold">
                                         {errors.descripcion}
@@ -243,7 +248,8 @@ export default function Create() {
                                         processing ||
                                         !data.latitud ||
                                         !data.foto ||
-                                        !data.descripcion
+                                        !data.descripcion ||
+                                        !data.tipo_incidencia
                                     }
                                     className="w-full px-6 py-4 bg-gray-900 text-white text-lg font-bold rounded-xl shadow-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                                 >

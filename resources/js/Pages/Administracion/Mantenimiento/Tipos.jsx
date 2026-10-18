@@ -40,6 +40,7 @@ export default function Tipos({ tipos }) {
                                 placeholder="Nombre del mantenimiento"
                                 className="w-full border-slate-300 text-sm"
                                 required
+                                minLength={2}
                             />
                             <textarea
                                 value={form.data.descripcion}

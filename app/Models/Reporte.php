@@ -10,6 +10,7 @@ class Reporte extends Model
 {
     protected $fillable = [
         'user_id',
+        'tacho_id',
         'assigned_to',
         'foto_path',
         'evidencia_path',
@@ -39,6 +40,11 @@ class Reporte extends Model
             'assigned_at' => 'datetime',
             'atendido_at' => 'datetime',
         ];
+    }
+
+    public function tacho(): BelongsTo
+    {
+        return $this->belongsTo(Tacho::class);
     }
 
     public function user(): BelongsTo

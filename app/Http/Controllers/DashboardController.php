@@ -46,6 +46,7 @@ class DashboardController extends Controller
             'vehiculos' => $this->modulo('Vehículos', 'Registra la flota y conforma los equipos de cada vehículo.', 'vehiculos', route('administracion.vehiculos.index')),
             'rutas' => $this->modulo('Gestión de rutas', 'Visualiza incidencias, equipos y la planificación territorial.', 'rutas', route('administracion.rutas.index')),
             'reportes' => $this->modulo('Reportes', 'Revisa indicadores y métricas operativas del sistema.', 'reportes', route('administracion.reportes.index')),
+            'tachos' => $this->modulo('Tachos IoT', 'Puntos fijos en el mapa, capacidad del contenedor y alertas del ESP32.', 'tachos', route('administracion.tachos.index')),
             'operaciones' => $this->modulo('Operaciones asignadas', 'Consulta las tareas de limpieza y registra evidencias.', 'vehiculos', route('limpieza.dashboard')),
         ];
     }
@@ -57,7 +58,7 @@ class DashboardController extends Controller
     {
         $catalogo = $this->catalogoModulos();
 
-        return collect(['incidencias', 'contratos', 'vehiculos', 'rutas', 'reportes'])
+        return collect(['incidencias', 'contratos', 'vehiculos', 'rutas', 'reportes', 'tachos'])
             ->map(fn (string $modulo) => $catalogo[$modulo])
             ->all();
     }

@@ -160,7 +160,10 @@ class HorarioPersonalController extends Controller
 
         $validated = $request->validate($reglas, [
             'turnos.required' => 'Define al menos un turno.',
+            'turnos.min' => 'Define al menos un turno.',
             'colaborador_id.required' => 'Selecciona al colaborador.',
+            'nombre.required' => 'Ingresa el nombre de la plantilla.',
+            'vigencia_inicio.required' => 'Indica el inicio de vigencia.',
         ]);
 
         if (HorarioSemanal::totalHoras($validated['dias'] ?? []) <= 0) {

@@ -145,6 +145,12 @@ class GestionRutasController extends Controller
             'fecha' => ['required', 'date', 'after_or_equal:today'],
             'reporte_ids' => ['required', 'array', 'min:1'],
             'reporte_ids.*' => ['required', 'integer', 'distinct', 'exists:reportes,id'],
+        ], [
+            'camion_id.required' => 'Selecciona el vehículo de la ruta.',
+            'fecha.required' => 'Indica la fecha de recolección.',
+            'fecha.after_or_equal' => 'La fecha de la ruta no puede ser anterior a hoy.',
+            'reporte_ids.required' => 'Selecciona al menos una incidencia.',
+            'reporte_ids.min' => 'Selecciona al menos una incidencia.',
         ]);
 
         $camion = Camion::with('personal')->findOrFail($validated['camion_id']);

@@ -80,7 +80,7 @@ export default function Cargos({ cargos }) {
                             <div className="space-y-4 p-6">
                                 <label className="block text-xs font-semibold text-slate-600">
                                     Nombre *
-                                    <input value={form.data.nombre} onChange={(event) => form.setData('nombre', event.target.value)} className="mt-1.5 w-full rounded-xl border-slate-300 text-sm" required />
+                                    <input value={form.data.nombre} onChange={(event) => form.setData('nombre', event.target.value)} className="mt-1.5 w-full rounded-xl border-slate-300 text-sm" required minLength={2} />
                                 </label>
                                 <label className="block text-xs font-semibold text-slate-600">
                                     Descripción

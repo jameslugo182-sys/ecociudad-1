@@ -123,11 +123,12 @@ export default function Roles({ roles, modulos }) {
                                             </label>
                                         ))}
                                     </div>
+                                    {form.errors.modulos && <p className="text-xs font-medium text-red-600">{form.errors.modulos}</p>}
                                 </div>
                                 {Object.values(form.errors).map((error) => <p key={error} className="text-xs text-red-600">{error}</p>)}
                                 <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
                                     <button type="button" onClick={cerrarFormulario} className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700">Cancelar</button>
-                                    <button type="submit" disabled={form.processing} className="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+                                    <button type="submit" disabled={form.processing || form.data.modulos.length === 0} className="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
                                         {form.processing ? 'Guardando…' : 'Guardar'}
                                     </button>
                                 </div>
