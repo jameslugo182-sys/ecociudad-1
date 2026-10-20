@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Camion;
 use App\Models\Reporte;
 use App\Models\RutaRecoleccion;
+use App\Models\User;
 use App\Services\PlanificadorFlotaService;
 use App\Services\TrazadoRutaService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -18,6 +21,11 @@ use Inertia\Response;
 
 class GestionRutasController extends Controller
 {
+    public function __construct(
+        private readonly TrazadoRutaService $trazado,
+        private readonly PlanificadorFlotaService $planificador,
+    ) {}
+
     public function index(Request $request): Response
     {
         return Inertia::render('Rutas/Index', [
@@ -33,9 +41,8 @@ class GestionRutasController extends Controller
                 'prioridad',
                 'created_at',
             ]),
-            'equipos' => Camion::query()
+            'equipos' => $this->camionesDisponibles()
                 ->with(['personal' => fn ($query) => $query->select('users.id', 'name')])
-                ->where('estado', 'Disponible')
                 ->orderBy('codigo')
                 ->get(),
             'rutas' => RutaRecoleccion::query()
@@ -48,7 +55,7 @@ class GestionRutasController extends Controller
                 ->take(20)
                 ->get()
                 ->each(function (RutaRecoleccion $ruta) {
-                    if (in_array($ruta->estado, ['Planificada', 'En curso'], true)) {
+                    if ($ruta->estaActiva()) {
                         $ruta->completarTrazadoVial();
                     }
                 }),
@@ -59,8 +66,7 @@ class GestionRutasController extends Controller
     public function horarios(Request $request): Response
     {
         return Inertia::render('Rutas/Horarios', [
-            'rutas' => RutaRecoleccion::query()
-                ->whereIn('estado', ['Planificada', 'En curso'])
+            'rutas' => $this->rutasActivas()
                 ->with([
                     'camion.personal' => fn ($query) => $query->select('users.id', 'name'),
                     'reportes:id,descripcion,estado,latitud,longitud,ruta_orden',
@@ -82,8 +88,7 @@ class GestionRutasController extends Controller
 
         return Inertia::render('Rutas/Cronograma', [
             'mes' => $mes,
-            'rutas' => RutaRecoleccion::query()
-                ->whereIn('estado', ['Planificada', 'En curso'])
+            'rutas' => $this->rutasActivas()
                 ->whereNotNull('hora_inicio')
                 ->whereNotNull('hora_fin')
                 ->whereNotNull('dias_recoleccion')
@@ -103,7 +108,7 @@ class GestionRutasController extends Controller
     public function actualizarHorario(Request $request, RutaRecoleccion $ruta): RedirectResponse
     {
         abort_unless(
-            in_array($ruta->estado, ['Planificada', 'En curso'], true),
+            $ruta->estaActiva(),
             422,
             'Solo se puede programar el horario de una ruta activa.'
         );
@@ -137,40 +142,11 @@ class GestionRutasController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'camion_id' => [
-                'required',
-                Rule::exists('camiones', 'id')->where('estado', 'Disponible'),
-            ],
-            'fecha' => ['required', 'date', 'after_or_equal:today'],
-            'reporte_ids' => ['required', 'array', 'min:1'],
-            'reporte_ids.*' => ['required', 'integer', 'distinct', 'exists:reportes,id'],
-        ], [
-            'camion_id.required' => 'Selecciona el vehículo de la ruta.',
-            'fecha.required' => 'Indica la fecha de recolección.',
-            'fecha.after_or_equal' => 'La fecha de la ruta no puede ser anterior a hoy.',
-            'reporte_ids.required' => 'Selecciona al menos una incidencia.',
-            'reporte_ids.min' => 'Selecciona al menos una incidencia.',
-        ]);
-
-        $camion = Camion::with('personal')->findOrFail($validated['camion_id']);
-
-        if (! $camion->tieneEquipoCompleto()) {
-            throw ValidationException::withMessages([
-                'camion_id' => 'El vehículo debe tener un conductor y tres recolectores.',
-            ]);
-        }
+        $validated = $this->validarAlta($request);
+        $camion = $this->camionConEquipoCompleto((int) $validated['camion_id']);
 
         DB::transaction(function () use ($request, $validated, $camion) {
-            $reportes = Reporte::query()
-                ->whereIn('id', $validated['reporte_ids'])
-                ->where('estado', '!=', 'Atendido')
-                ->whereDoesntHave(
-                    'rutas',
-                    fn ($query) => $query->whereIn('rutas_recoleccion.estado', ['Planificada', 'En curso'])
-                )
-                ->lockForUpdate()
-                ->get();
+            $reportes = $this->reportesElegiblesParaIds($validated['reporte_ids']);
 
             if ($reportes->count() !== count($validated['reporte_ids'])) {
                 throw ValidationException::withMessages([
@@ -178,33 +154,7 @@ class GestionRutasController extends Controller
                 ]);
             }
 
-            $trazado = app(TrazadoRutaService::class)->trazar($reportes->all());
-            $ordenados = $trazado['paradas'];
-            $ruta = RutaRecoleccion::create([
-                'camion_id' => $camion->id,
-                'generado_por' => $request->user()->id,
-                'fecha' => $validated['fecha'],
-                'estado' => 'Planificada',
-                'distancia_estimada_km' => $trazado['distancia_km'],
-                'geometria' => $trazado['geometria'],
-            ]);
-            $conductor = $camion->personal->firstWhere('pivot.puesto', 'conductor');
-            $puntos = [];
-
-            foreach ($ordenados as $indice => $punto) {
-                $puntos[$punto['reporte']->id] = [
-                    'orden' => $indice + 1,
-                    'distancia_desde_anterior_km' => round($punto['distancia'], 2),
-                ];
-                $punto['reporte']->update([
-                    'assigned_to' => $conductor->id,
-                    'estado' => 'Asignado',
-                    'ruta_orden' => $indice + 1,
-                    'assigned_at' => now(),
-                ]);
-            }
-
-            $ruta->reportes()->attach($puntos);
+            $this->persistirRuta($request->user(), $camion, $validated['fecha'], $reportes);
         });
 
         return back()
@@ -233,12 +183,20 @@ class GestionRutasController extends Controller
         return back()->with('success', 'Ruta cancelada; las incidencias volvieron a estar disponibles.');
     }
 
-    public function proponer(Request $request): JsonResponse
+    public function proponer(): JsonResponse
     {
-        $reportes = $this->reportesDisponibles()->get();
-        $vehiculos = Camion::query()
+        $reportes = $this->reportesDisponibles()->get([
+            'id',
+            'user_id',
+            'latitud',
+            'longitud',
+            'descripcion',
+            'estado',
+            'tipo_incidencia',
+            'prioridad',
+        ]);
+        $vehiculos = $this->camionesDisponibles()
             ->with('personal')
-            ->where('estado', 'Disponible')
             ->get()
             ->filter(fn (Camion $camion) => $camion->tieneEquipoCompleto())
             ->count();
@@ -255,25 +213,131 @@ class GestionRutasController extends Controller
             ]);
         }
 
-        $propuestas = app(PlanificadorFlotaService::class)->proponer($reportes->all(), $vehiculos);
-
         return response()->json([
             'vehiculos' => $vehiculos,
             'incidencias' => $reportes->count(),
-            'propuestas' => $propuestas,
+            'propuestas' => $this->planificador->proponer($reportes->all(), $vehiculos),
         ]);
     }
 
-    private function reportesDisponibles()
+    /**
+     * @return array<string, mixed>
+     */
+    private function validarAlta(Request $request): array
+    {
+        return $request->validate([
+            'camion_id' => [
+                'required',
+                Rule::exists('camiones', 'id')->where('estado', 'Disponible'),
+            ],
+            'fecha' => ['required', 'date', 'after_or_equal:today'],
+            'reporte_ids' => ['required', 'array', 'min:1'],
+            'reporte_ids.*' => ['required', 'integer', 'distinct', 'exists:reportes,id'],
+        ], [
+            'camion_id.required' => 'Selecciona el vehículo de la ruta.',
+            'fecha.required' => 'Indica la fecha de recolección.',
+            'fecha.after_or_equal' => 'La fecha de la ruta no puede ser anterior a hoy.',
+            'reporte_ids.required' => 'Selecciona al menos una incidencia.',
+            'reporte_ids.min' => 'Selecciona al menos una incidencia.',
+        ]);
+    }
+
+    private function camionConEquipoCompleto(int $camionId): Camion
+    {
+        $camion = Camion::with('personal')->findOrFail($camionId);
+
+        if (! $camion->tieneEquipoCompleto()) {
+            throw ValidationException::withMessages([
+                'camion_id' => 'El vehículo debe tener un conductor y tres recolectores.',
+            ]);
+        }
+
+        return $camion;
+    }
+
+    /**
+     * @param  list<int>  $ids
+     * @return Collection<int, Reporte>
+     */
+    private function reportesElegiblesParaIds(array $ids): Collection
+    {
+        return Reporte::query()
+            ->whereIn('id', $ids)
+            ->where('estado', '!=', 'Atendido')
+            ->whereDoesntHave(
+                'rutas',
+                fn ($query) => $query->whereIn('rutas_recoleccion.estado', RutaRecoleccion::ESTADOS_ACTIVAS)
+            )
+            ->lockForUpdate()
+            ->get();
+    }
+
+    /**
+     * @param  Collection<int, Reporte>  $reportes
+     */
+    private function persistirRuta(User $autor, Camion $camion, string $fecha, Collection $reportes): void
+    {
+        $trazado = $this->trazado->trazar($reportes->all());
+        $conductor = $this->conductorDelEquipo($camion);
+        $ruta = RutaRecoleccion::create([
+            'camion_id' => $camion->id,
+            'generado_por' => $autor->id,
+            'fecha' => $fecha,
+            'estado' => 'Planificada',
+            'distancia_estimada_km' => $trazado['distancia_km'],
+            'geometria' => $trazado['geometria'],
+        ]);
+        $puntos = [];
+
+        foreach ($trazado['paradas'] as $indice => $punto) {
+            $puntos[$punto['reporte']->id] = [
+                'orden' => $indice + 1,
+                'distancia_desde_anterior_km' => round($punto['distancia'], 2),
+            ];
+            $punto['reporte']->update([
+                'assigned_to' => $conductor->id,
+                'estado' => 'Asignado',
+                'ruta_orden' => $indice + 1,
+                'assigned_at' => now(),
+            ]);
+        }
+
+        $ruta->reportes()->attach($puntos);
+    }
+
+    private function conductorDelEquipo(Camion $camion): User
+    {
+        $conductor = $camion->personal->firstWhere('pivot.puesto', 'conductor');
+
+        if (! $conductor instanceof User) {
+            throw ValidationException::withMessages([
+                'camion_id' => 'El vehículo debe tener un conductor asignado.',
+            ]);
+        }
+
+        return $conductor;
+    }
+
+    private function reportesDisponibles(): Builder
     {
         return Reporte::query()
             ->with('user:id,name')
             ->where('estado', '!=', 'Atendido')
             ->whereDoesntHave(
                 'rutas',
-                fn ($query) => $query->whereIn('rutas_recoleccion.estado', ['Planificada', 'En curso'])
+                fn ($query) => $query->whereIn('rutas_recoleccion.estado', RutaRecoleccion::ESTADOS_ACTIVAS)
             )
             ->latest();
+    }
+
+    private function rutasActivas(): Builder
+    {
+        return RutaRecoleccion::query()->activas();
+    }
+
+    private function camionesDisponibles(): Builder
+    {
+        return Camion::query()->where('estado', 'Disponible');
     }
 
     /**
@@ -281,16 +345,16 @@ class GestionRutasController extends Controller
      */
     private function routeNames(Request $request): array
     {
-        $esAdministracion = $request->routeIs('administracion.*');
+        $prefijo = $request->routeIs('administracion.*') ? 'administracion.rutas' : 'admin.rutas';
 
         return [
-            'index' => $esAdministracion ? 'administracion.rutas.index' : 'admin.rutas.index',
-            'store' => $esAdministracion ? 'administracion.rutas.store' : 'admin.rutas.store',
-            'proponer' => $esAdministracion ? 'administracion.rutas.proponer' : 'admin.rutas.proponer',
-            'cancelar' => $esAdministracion ? 'administracion.rutas.cancelar' : 'admin.rutas.cancelar',
-            'horarios' => $esAdministracion ? 'administracion.rutas.horarios' : 'admin.rutas.horarios',
-            'horario' => $esAdministracion ? 'administracion.rutas.horario' : 'admin.rutas.horario',
-            'cronograma' => $esAdministracion ? 'administracion.rutas.cronograma' : 'admin.rutas.cronograma',
+            'index' => $prefijo.'.index',
+            'store' => $prefijo.'.store',
+            'proponer' => $prefijo.'.proponer',
+            'cancelar' => $prefijo.'.cancelar',
+            'horarios' => $prefijo.'.horarios',
+            'horario' => $prefijo.'.horario',
+            'cronograma' => $prefijo.'.cronograma',
         ];
     }
 }

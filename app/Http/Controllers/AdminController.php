@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Reporte;
 use App\Models\User;
 use App\Notifications\ReporteAtendido;
+use App\Services\TrazadoRutaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,10 @@ use Inertia\Response;
 class AdminController extends Controller
 {
     private const ESTADOS = ['Pendiente', 'Asignado', 'En atención', 'Atendido'];
+
+    public function __construct(
+        private readonly TrazadoRutaService $trazado,
+    ) {}
 
     public function dashboard(Request $request): Response
     {
@@ -167,7 +172,12 @@ class AdminController extends Controller
             $distanciaMinima = PHP_FLOAT_MAX;
 
             foreach ($reportes as $indice => $candidato) {
-                $distancia = $this->distanciaHaversine($actual, $candidato);
+                $distancia = $this->trazado->distanciaKm(
+                    (float) $actual->latitud,
+                    (float) $actual->longitud,
+                    (float) $candidato->latitud,
+                    (float) $candidato->longitud,
+                );
 
                 if ($distancia < $distanciaMinima) {
                     $distanciaMinima = $distancia;
@@ -180,18 +190,5 @@ class AdminController extends Controller
         }
 
         return $ruta;
-    }
-
-    private function distanciaHaversine(Reporte $origen, Reporte $destino): float
-    {
-        $radioTierraKm = 6371;
-        $dLat = deg2rad($destino->latitud - $origen->latitud);
-        $dLng = deg2rad($destino->longitud - $origen->longitud);
-        $a = sin($dLat / 2) ** 2
-            + cos(deg2rad($origen->latitud))
-            * cos(deg2rad($destino->latitud))
-            * sin($dLng / 2) ** 2;
-
-        return $radioTierraKm * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 }

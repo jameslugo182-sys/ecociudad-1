@@ -1,6 +1,6 @@
 import { Transition } from '@headlessui/react';
 import { Link } from '@inertiajs/react';
-import { createContext, useContext, useState } from 'react';
+import { cloneElement, createContext, isValidElement, useContext, useState } from 'react';
 
 const DropDownContext = createContext();
 
@@ -23,13 +23,23 @@ const Trigger = ({ children }) => {
 
     return (
         <>
-            <div onClick={toggleOpen}>{children}</div>
+            {isValidElement(children)
+                ? cloneElement(children, {
+                    type: children.type === 'button' ? children.props.type || 'button' : children.props.type,
+                    onClick: (event) => {
+                        children.props.onClick?.(event);
+                        toggleOpen();
+                    },
+                })
+                : children}
 
             {open && (
-                <div
-                    className="fixed inset-0 z-40"
+                <button
+                    type="button"
+                    className="fixed inset-0 z-40 cursor-default"
+                    aria-label="Cerrar menú"
                     onClick={() => setOpen(false)}
-                ></div>
+                />
             )}
         </>
     );
@@ -73,7 +83,7 @@ const Content = ({
                     className={`absolute z-50 rounded-md shadow-lg ${
                         direction === 'up' ? 'bottom-full mb-2' : 'mt-2'
                     } ${alignmentClasses} ${widthClasses}`}
-                    onClick={() => setOpen(false)}
+                    role="menu"
                 >
                     <div
                         className={

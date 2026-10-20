@@ -20,7 +20,7 @@ class LimpiezaController extends Controller
             ->where(function ($query) use ($usuarioId) {
                 $query->where('assigned_to', $usuarioId)
                     ->orWhereHas('rutas', function ($rutaQuery) use ($usuarioId) {
-                        $rutaQuery->whereIn('rutas_recoleccion.estado', ['Planificada', 'En curso'])
+                        $rutaQuery->whereIn('rutas_recoleccion.estado', RutaRecoleccion::ESTADOS_ACTIVAS)
                             ->whereHas('camion.personal', fn ($personalQuery) => $personalQuery->where('users.id', $usuarioId));
                     });
             })
@@ -83,19 +83,9 @@ class LimpiezaController extends Controller
             'estado' => 'Atendido',
             'atendido_at' => now(),
         ]);
-        $reporte->load('rutas.reportes');
-        foreach ($reporte->rutas->whereIn('estado', ['Planificada', 'En curso']) as $ruta) {
-            $ruta->update([
-                'estado' => $ruta->reportes->every(fn (Reporte $parada) => $parada->id === $reporte->id || $parada->estado === 'Atendido')
-                    ? 'Finalizada'
-                    : 'En curso',
-                'iniciada_at' => $ruta->iniciada_at ?? now(),
-                'finalizada_at' => $ruta->reportes->every(fn (Reporte $parada) => $parada->id === $reporte->id || $parada->estado === 'Atendido')
-                    ? now()
-                    : null,
-            ]);
-        }
-        $reporte->user->notify(new ReporteAtendido($reporte));
+
+        $this->actualizarRutasTrasCierre($reporte);
+        $reporte->user?->notify(new ReporteAtendido($reporte));
 
         return back()->with('success', "Reporte #{$reporte->id} cerrado con evidencia.");
     }
@@ -103,7 +93,7 @@ class LimpiezaController extends Controller
     private function autorizarAsignacion(Request $request, Reporte $reporte): void
     {
         $perteneceAlEquipo = $reporte->rutas()
-            ->whereIn('rutas_recoleccion.estado', ['Planificada', 'En curso'])
+            ->whereIn('rutas_recoleccion.estado', RutaRecoleccion::ESTADOS_ACTIVAS)
             ->whereHas('camion.personal', fn ($query) => $query->where('users.id', $request->user()->id))
             ->exists();
 
@@ -113,7 +103,7 @@ class LimpiezaController extends Controller
     private function rutaAsignada(Request $request): ?RutaRecoleccion
     {
         $ruta = RutaRecoleccion::query()
-            ->whereIn('estado', ['Planificada', 'En curso'])
+            ->activas()
             ->whereHas(
                 'camion.personal',
                 fn ($query) => $query->where('users.id', $request->user()->id)
@@ -127,5 +117,22 @@ class LimpiezaController extends Controller
             ->first();
 
         return $ruta?->completarTrazadoVial();
+    }
+
+    private function actualizarRutasTrasCierre(Reporte $reporte): void
+    {
+        $reporte->load('rutas.reportes');
+
+        foreach ($reporte->rutas->whereIn('estado', RutaRecoleccion::ESTADOS_ACTIVAS) as $ruta) {
+            $todasAtendidas = $ruta->reportes->every(
+                fn (Reporte $parada) => $parada->id === $reporte->id || $parada->estado === 'Atendido'
+            );
+
+            $ruta->update([
+                'estado' => $todasAtendidas ? 'Finalizada' : 'En curso',
+                'iniciada_at' => $ruta->iniciada_at ?? now(),
+                'finalizada_at' => $todasAtendidas ? now() : null,
+            ]);
+        }
     }
 }

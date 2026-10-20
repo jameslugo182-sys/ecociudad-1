@@ -100,4 +100,11 @@ class TrazadoRutaServiceTest extends TestCase
         $this->assertSame($cerca, $trazado['paradas'][1]['reporte']);
         $this->assertSame(2.0, $trazado['paradas'][0]['distancia']);
     }
+
+    public function test_haversine_distance_is_zero_for_the_same_point(): void
+    {
+        $distancia = app(TrazadoRutaService::class)->distanciaKm(-12.05, -75.22, -12.05, -75.22);
+
+        $this->assertSame(0.0, $distancia);
+    }
 }

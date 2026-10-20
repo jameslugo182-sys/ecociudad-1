@@ -16,7 +16,7 @@
         .horario td, .horario th { border: 1px solid #333; text-align: center; }
         .horario td.dia { text-align: left; font-weight: bold; background: #f3f3f3; }
         .firma { margin-top: 48px; width: 100%; }
-        .firma td { text-align: center; padding-top: 36px; }
+        .firma th, .firma td { text-align: center; padding-top: 36px; font-weight: normal; }
         .linea { border-top: 1px solid #111; width: 70%; margin: 0 auto 6px; }
         .nota { font-size: 10px; margin-top: 18px; color: #333; }
         p { text-align: justify; }
@@ -35,22 +35,27 @@
 
     <h2>Datos del colaborador</h2>
     <table class="datos">
-        <tr><td class="label">Nombres y apellidos</td><td>{{ $horario->colaborador?->nombre_completo ?: '—' }}</td></tr>
-        <tr><td class="label">Documento</td><td>{{ $horario->colaborador?->documento ?? '—' }}</td></tr>
-        <tr><td class="label">Cargo</td><td>{{ $contrato?->cargo?->nombre ?? '—' }}</td></tr>
-        <tr><td class="label">Plantilla</td><td>{{ $horario->plantilla?->nombre ?? 'Registro manual' }}</td></tr>
-        <tr>
-            <td class="label">Vigencia</td>
-            <td>
-                {{ $horario->vigencia_inicio?->format('d/m/Y') }}
-                @if ($horario->vigencia_fin)
-                    al {{ $horario->vigencia_fin->format('d/m/Y') }}
-                @else
-                    (sin fecha de término)
-                @endif
-            </td>
-        </tr>
-        <tr><td class="label">Horas semanales</td><td>{{ number_format((float) $horario->horas_semanales, 1) }} h</td></tr>
+        <thead>
+            <tr><th scope="col">Campo</th><th scope="col">Dato</th></tr>
+        </thead>
+        <tbody>
+            <tr><th class="label" scope="row">Nombres y apellidos</th><td>{{ $horario->colaborador?->nombre_completo ?: '—' }}</td></tr>
+            <tr><th class="label" scope="row">Documento</th><td>{{ $horario->colaborador?->documento ?? '—' }}</td></tr>
+            <tr><th class="label" scope="row">Cargo</th><td>{{ $contrato?->cargo?->nombre ?? '—' }}</td></tr>
+            <tr><th class="label" scope="row">Plantilla</th><td>{{ $horario->plantilla?->nombre ?? 'Registro manual' }}</td></tr>
+            <tr>
+                <th class="label" scope="row">Vigencia</th>
+                <td>
+                    {{ $horario->vigencia_inicio?->format('d/m/Y') }}
+                    @if ($horario->vigencia_fin)
+                        al {{ $horario->vigencia_fin->format('d/m/Y') }}
+                    @else
+                        (sin fecha de término)
+                    @endif
+                </td>
+            </tr>
+            <tr><th class="label" scope="row">Horas semanales</th><td>{{ number_format((float) $horario->horas_semanales, 1) }} h</td></tr>
+        </tbody>
     </table>
 
     <h2>Horario semanal</h2>
@@ -83,18 +88,26 @@
     </p>
 
     <table class="firma">
-        <tr>
-            <td>
-                <div class="linea"></div>
-                Municipalidad Distrital de El Tambo<br>Área de personal
-            </td>
-            <td>
-                <div class="linea"></div>
-                {{ $horario->colaborador?->nombre_completo }}<br>
-                DNI {{ $horario->colaborador?->documento ?? '—' }}<br>
-                Recibí conforme
-            </td>
-        </tr>
+        <thead>
+            <tr>
+                <th scope="col">Municipalidad</th>
+                <th scope="col">Trabajador</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <div class="linea"></div>
+                    Municipalidad Distrital de El Tambo<br>Área de personal
+                </td>
+                <td>
+                    <div class="linea"></div>
+                    {{ $horario->colaborador?->nombre_completo }}<br>
+                    DNI {{ $horario->colaborador?->documento ?? '—' }}<br>
+                    Recibí conforme
+                </td>
+            </tr>
+        </tbody>
     </table>
 
     <p class="nota">Huancayo, {{ now()->translatedFormat('d \d\e F \d\e Y') }}. Conservar una copia firmada del horario entregado.</p>

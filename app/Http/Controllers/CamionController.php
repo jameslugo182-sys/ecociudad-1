@@ -105,6 +105,12 @@ class CamionController extends Controller
 
     public function destroy(Camion $camion): RedirectResponse
     {
+        if ($camion->rutas()->exists() || $camion->mantenimientos()->exists()) {
+            throw ValidationException::withMessages([
+                'camion' => 'No se puede eliminar un vehículo con rutas o mantenimientos registrados.',
+            ]);
+        }
+
         if ($camion->foto_path) {
             Storage::disk('public')->delete($camion->foto_path);
         }

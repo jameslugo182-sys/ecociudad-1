@@ -103,8 +103,17 @@ function VistaMes({ ancla, rutas, onSeleccionarDia, onSeleccionarEvento }) {
                         return (
                             <div
                                 key={celda.clave}
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Día ${celda.dia}`}
                                 className={`cronograma-fc__day${celda.delMes ? '' : ' is-other'}${celda.hoy ? ' is-today' : ''}`}
                                 onClick={() => onSeleccionarDia(parseClave(celda.clave))}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                        event.preventDefault();
+                                        onSeleccionarDia(parseClave(celda.clave));
+                                    }
+                                }}
                             >
                                 <span className="cronograma-fc__day-number">{celda.dia}</span>
                                 <div className="cronograma-fc__events">

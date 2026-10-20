@@ -313,8 +313,14 @@ export default function Index({ reportes, equipos, rutas, routeNames }) {
                                             </div>
                                             <div className="max-h-72 space-y-2 overflow-y-auto border border-slate-200 p-2">
                                                 {reportes.map((reporte) => (
-                                                    <label key={reporte.id} className="flex cursor-pointer gap-2 border-b border-slate-100 p-2 text-xs last:border-0">
+                                                    <label
+                                                        key={reporte.id}
+                                                        htmlFor={`incidencia-ruta-${reporte.id}`}
+                                                        aria-label={`Incidencia ${reporte.id}`}
+                                                        className="flex cursor-pointer gap-2 border-b border-slate-100 p-2 text-xs last:border-0"
+                                                    >
                                                         <input
+                                                            id={`incidencia-ruta-${reporte.id}`}
                                                             type="checkbox"
                                                             checked={form.data.reporte_ids.includes(reporte.id)}
                                                             onChange={() => alternarReporte(reporte.id)}

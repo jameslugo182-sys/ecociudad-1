@@ -64,6 +64,19 @@ Cobertura útil:
 
 Si tocas permisos, rutas o Inertia, agrega o ajusta un test Feature. Si tocas OSRM/agrupación, un Unit con `Http::fake`.
 
+## SonarQube (local, puerto 9000)
+
+Configuración: `sonar-project.properties`. El token del proyecto **no se commitea**.
+
+```powershell
+$env:XDEBUG_MODE='coverage'
+php artisan test --coverage-clover=coverage.xml
+$env:SONAR_TOKEN='pega_aqui_el_token_sqp'
+sonar-scanner.bat
+```
+
+Si pasas `-Dsonar.sources=.` el análisis mete `vendor/` y `node_modules/`. Déjalo en las propiedades (solo `app`, `resources`, `routes`, etc.). El reporte queda en http://localhost:9000.
+
 ## Estilo
 
 ```bash

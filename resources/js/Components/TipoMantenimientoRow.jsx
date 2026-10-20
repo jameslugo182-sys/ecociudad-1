@@ -28,7 +28,7 @@ export default function TipoMantenimientoRow({ tipo }) {
                     <input value={form.data.nombre} onChange={(event) => form.setData('nombre', event.target.value)} className="w-full rounded-lg border-slate-300 text-sm" required />
                     <textarea value={form.data.descripcion} onChange={(event) => form.setData('descripcion', event.target.value)} className="w-full rounded-lg border-slate-300 text-sm" rows="2" />
                     <div className="flex gap-2">
-                        <button className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white">Guardar</button>
+                        <button type="submit" className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white">Guardar</button>
                         <button type="button" onClick={() => setEditando(false)} className="rounded-lg border px-3 py-2 text-xs">Cancelar</button>
                     </div>
                 </form>
