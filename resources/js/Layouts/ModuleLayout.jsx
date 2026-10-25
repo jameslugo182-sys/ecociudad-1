@@ -107,7 +107,7 @@ export default function ModuleLayout({ moduleName, items, children }) {
                 <div className="hidden border-t border-black/10 p-4 lg:block">
                     <Dropdown>
                         <Dropdown.Trigger>
-                            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-white/30">
+                            <button type="button" className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-white/30">
                                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-950 font-bold text-white">
                                     {auth.user.name.slice(0, 1).toUpperCase()}
                                 </span>

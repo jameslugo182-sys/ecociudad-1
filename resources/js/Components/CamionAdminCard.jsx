@@ -64,10 +64,11 @@ export default function CamionAdminCard({ camion, personalLimpieza }) {
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <label htmlFor={`conductor-${camion.id}`} className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                         Conductor
                     </label>
                     <select
+                        id={`conductor-${camion.id}`}
                         value={equipo.data.conductor_id}
                         onChange={(event) => equipo.setData('conductor_id', event.target.value)}
                         className="w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"
@@ -85,10 +86,11 @@ export default function CamionAdminCard({ camion, personalLimpieza }) {
                 <div className="grid gap-3 sm:grid-cols-3">
                     {equipo.data.recolector_ids.map((recolectorId, indice) => (
                         <div key={indice}>
-                            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <label htmlFor={`recolector-${camion.id}-${indice}`} className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                                 Recolector {indice + 1}
                             </label>
                             <select
+                                id={`recolector-${camion.id}-${indice}`}
                                 value={recolectorId}
                                 onChange={(event) => cambiarRecolector(indice, event.target.value)}
                                 className="w-full rounded-xl border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"

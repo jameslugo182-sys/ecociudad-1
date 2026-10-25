@@ -84,10 +84,11 @@ export default function TareaLimpiezaCard({ reporte }) {
                         )}
 
                         <form onSubmit={cerrar} className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                            <label className="block text-sm font-semibold text-emerald-900">
+                            <label htmlFor={`evidencia-${reporte.id}`} className="block text-sm font-semibold text-emerald-900">
                                 Evidencia de limpieza
                             </label>
                             <input
+                                id={`evidencia-${reporte.id}`}
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp"
                                 capture="environment"

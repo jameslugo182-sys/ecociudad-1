@@ -23,8 +23,11 @@ class LecturaIotController extends Controller
         }
 
         $validated = $request->validate([
-            'distancia_cm' => ['nullable', 'numeric', 'min:2', 'max:400'],
-            'porcentaje' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'distancia_cm' => ['required_without:porcentaje', 'nullable', 'numeric', 'min:2', 'max:400'],
+            'porcentaje' => ['required_without:distancia_cm', 'nullable', 'integer', 'min:0', 'max:100'],
+        ], [
+            'distancia_cm.required_without' => 'Envía distancia_cm o porcentaje.',
+            'porcentaje.required_without' => 'Envía distancia_cm o porcentaje.',
         ]);
 
         $lectura = $niveles->registrar(

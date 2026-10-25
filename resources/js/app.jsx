@@ -18,7 +18,7 @@ function SessionSynchronizer({ children }) {
     return children;
 }
 
-createInertiaApp({
+void createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) =>
         resolvePageComponent(

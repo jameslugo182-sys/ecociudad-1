@@ -104,7 +104,7 @@ export default function Create() {
                         >
                             {/* PASO 1: Fotografía (Diseño Drag&Drop simulado) */}
                             <div className="space-y-3">
-                                <label className="block text-sm font-bold text-gray-700">
+                                <label htmlFor="file-upload" className="block text-sm font-bold text-gray-700">
                                     1. Sube una fotografía 📸
                                 </label>
                                 <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-green-500 hover:bg-green-50 transition-colors">
@@ -154,13 +154,14 @@ export default function Create() {
 
                             {/* PASO 2: GPS */}
                             <div className="space-y-3">
-                                <label className="block text-sm font-bold text-gray-700">
+                                <label htmlFor="ubicacion-gps" className="block text-sm font-bold text-gray-700">
                                     2. Ubicación GPS 📍
                                 </label>
                                 <div
                                     className={`p-5 rounded-xl border ${gpsExito ? "bg-green-50 border-green-200" : "bg-blue-50 border-blue-200"} flex flex-col items-center justify-center transition-all`}
                                 >
                                     <button
+                                        id="ubicacion-gps"
                                         type="button"
                                         onClick={obtenerUbicacion}
                                         className={`w-full sm:w-auto px-6 py-3 font-bold text-white rounded-lg shadow-sm transition-all transform hover:scale-105 ${gpsExito ? "bg-green-600 shadow-green-200" : "bg-blue-600 hover:bg-blue-700 shadow-blue-200"}`}
@@ -187,10 +188,10 @@ export default function Create() {
                             <hr className="border-gray-100" />
 
                             {/* PASO 3: Opciones Dinámicas */}
-                            <div className="space-y-3">
-                                <label className="block text-sm font-bold text-gray-700">
+                            <fieldset className="m-0 space-y-3 border-0 p-0">
+                                <legend className="block text-sm font-bold text-gray-700">
                                     3. ¿Qué tipo de incidencia es? 🗑️
-                                </label>
+                                </legend>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {opcionesProblema.map((opcion) => (
                                         <button
@@ -238,7 +239,7 @@ export default function Create() {
                                         {errors.descripcion}
                                     </div>
                                 )}
-                            </div>
+                            </fieldset>
 
                             {/* Botón de Envío */}
                             <div className="pt-6">

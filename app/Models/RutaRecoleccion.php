@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\TrazadoRutaService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class RutaRecoleccion extends Model
 {
+    public const ESTADOS_ACTIVAS = ['Planificada', 'En curso'];
+
     public const ETIQUETAS_DIAS = [
         1 => 'Lun',
         2 => 'Mar',
@@ -104,6 +107,20 @@ class RutaRecoleccion extends Model
             ->map(fn (int $dia) => self::ETIQUETAS_DIAS[$dia] ?? '')
             ->filter()
             ->implode(', ');
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeActivas($query)
+    {
+        return $query->whereIn('estado', self::ESTADOS_ACTIVAS);
+    }
+
+    public function estaActiva(): bool
+    {
+        return in_array($this->estado, self::ESTADOS_ACTIVAS, true);
     }
 
     public function camion(): BelongsTo

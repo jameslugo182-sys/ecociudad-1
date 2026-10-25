@@ -56,7 +56,7 @@ class TachoController extends Controller
             'siguienteCodigo' => $this->siguienteCodigo(),
             'alertas' => Tacho::query()->where('alerta_activa', true)->count(),
             'rutasActivas' => RutaRecoleccion::query()
-                ->whereIn('estado', ['Planificada', 'En curso'])
+                ->activas()
                 ->with('camion:id,codigo,placa')
                 ->latest('fecha')
                 ->get(['id', 'camion_id', 'fecha', 'estado']),
@@ -134,7 +134,7 @@ class TachoController extends Controller
             'ruta_id' => [
                 'required',
                 'integer',
-                Rule::exists('rutas_recoleccion', 'id')->whereIn('estado', ['Planificada', 'En curso']),
+                Rule::exists('rutas_recoleccion', 'id')->whereIn('estado', RutaRecoleccion::ESTADOS_ACTIVAS),
             ],
         ], [
             'ruta_id.required' => 'Selecciona una ruta activa de un camión.',
@@ -156,7 +156,7 @@ class TachoController extends Controller
             }
 
             $enOtra = $reporte->rutas()
-                ->whereIn('rutas_recoleccion.estado', ['Planificada', 'En curso'])
+                ->whereIn('rutas_recoleccion.estado', RutaRecoleccion::ESTADOS_ACTIVAS)
                 ->where('rutas_recoleccion.id', '!=', $ruta->id)
                 ->exists();
 
@@ -231,11 +231,11 @@ class TachoController extends Controller
         $enRuta = false;
         if ($incidencia && $incidencia->relationLoaded('rutas')) {
             $enRuta = $incidencia->rutas->contains(
-                fn ($ruta) => in_array($ruta->estado, ['Planificada', 'En curso'], true)
+                fn ($ruta) => $ruta->estaActiva()
             );
         } elseif ($incidencia) {
             $enRuta = $incidencia->rutas()
-                ->whereIn('rutas_recoleccion.estado', ['Planificada', 'En curso'])
+                ->whereIn('rutas_recoleccion.estado', RutaRecoleccion::ESTADOS_ACTIVAS)
                 ->exists();
         }
 

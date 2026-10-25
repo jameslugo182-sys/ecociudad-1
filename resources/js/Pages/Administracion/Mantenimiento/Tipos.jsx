@@ -52,7 +52,7 @@ export default function Tipos({ tipos }) {
                             {Object.values(form.errors).map((error) => (
                                 <p key={error} className="text-xs text-red-600">{error}</p>
                             ))}
-                            <button className="w-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white">
+                            <button type="submit" className="w-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white">
                                 Agregar tipo
                             </button>
                         </form>

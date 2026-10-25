@@ -385,6 +385,11 @@ class TrazadoRutaService
     /**
      * @return array{0: float, 1: float}
      */
+    public function distanciaKm(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        return $this->distanciaHaversine($lat1, $lng1, $lat2, $lng2);
+    }
+
     private function coordenadaBase(): array
     {
         return [self::BASE_LATITUD, self::BASE_LONGITUD];
