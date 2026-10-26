@@ -28,7 +28,7 @@ const char* DEVICE_TOKEN = "pega_aqui_el_token_plano";
 
 const int PIN_TRIG = 5;
 const int PIN_ECHO = 18;
-const unsigned long INTERVALO_MS = 60000;
+const unsigned long INTERVALO_MS = 10000;
 
 unsigned long ultimaEnvio = 0;
 

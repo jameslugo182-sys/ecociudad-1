@@ -18,8 +18,8 @@ const datosIniciales = {
     direccion: '',
     latitud: '',
     longitud: '',
-    distancia_vacio_cm: 80,
-    distancia_lleno_cm: 8,
+    distancia_vacio_cm: 75,
+    distancia_lleno_cm: 5,
     umbral_alerta: 80,
     activo: true,
 };
@@ -65,6 +65,29 @@ export default function Index({ tachos, filters, estados, siguienteCodigo, alert
         setCodigoVisible(siguienteCodigo);
         return undefined;
     }, [siguienteCodigo, mostrarFormulario, editando]);
+
+    useEffect(() => {
+        if (mostrarFormulario) {
+            return undefined;
+        }
+
+        const actualizar = () => {
+            if (document.hidden) {
+                return;
+            }
+
+            router.reload({
+                only: ['tachos', 'alertas', 'rutasActivas'],
+                preserveState: true,
+                preserveScroll: true,
+                showProgress: false,
+            });
+        };
+
+        const intervalo = window.setInterval(actualizar, 5000);
+
+        return () => window.clearInterval(intervalo);
+    }, [mostrarFormulario]);
 
     const puntoSeleccionado =
         form.data.latitud !== '' && form.data.longitud !== ''
@@ -167,6 +190,7 @@ export default function Index({ tachos, filters, estados, siguienteCodigo, alert
                             <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">Tachos IoT</h2>
                             <p className="mt-1 text-sm text-slate-500">
                                 Coloca contenedores en el mapa, supervisa la capacidad y agrega los llenos a una ruta de camión.
+                                Las lecturas se actualizan solas.
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -317,7 +341,7 @@ export default function Index({ tachos, filters, estados, siguienteCodigo, alert
                                         </label>
                                     </div>
                                     <p className="text-[11px] text-slate-500">
-                                        Calibra el ultrasónico: vacío = distancia tapa–fondo; lleno = distancia con el tacho al tope.
+                                        Tacho de 75 cm con el sensor en la tapa: vacío 75 cm (tapa al fondo) y lleno 5 cm (el ultrasónico ya no mide bien más cerca).
                                     </p>
                                     {editando && (
                                         <label className="flex items-center gap-2 text-sm font-medium text-slate-700">

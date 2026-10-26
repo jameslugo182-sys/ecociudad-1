@@ -15,8 +15,8 @@ return new class extends Migration
             $table->string('direccion')->nullable();
             $table->decimal('latitud', 10, 8);
             $table->decimal('longitud', 11, 8);
-            $table->unsignedSmallInteger('distancia_vacio_cm')->default(80);
-            $table->unsignedSmallInteger('distancia_lleno_cm')->default(8);
+            $table->unsignedSmallInteger('distancia_vacio_cm')->default(75);
+            $table->unsignedSmallInteger('distancia_lleno_cm')->default(5);
             $table->unsignedTinyInteger('umbral_alerta')->default(80);
             $table->unsignedTinyInteger('nivel_porcentaje')->nullable();
             $table->decimal('distancia_cm', 6, 1)->nullable();

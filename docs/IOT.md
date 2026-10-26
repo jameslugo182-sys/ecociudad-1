@@ -19,7 +19,7 @@ La UI municipal sigue siendo Inertia + sesión. El ESP32 **no** usa login de usu
 
 1. Administrador (o rol con módulo `tachos`) abre **Tachos IoT**, marca el punto en Leaflet, calibra vacío/lleno/umbral y guarda.
 2. El sistema muestra **una sola vez** el token plano (flash `device_token`). Se copia al sketch.
-3. El ESP32 envía `distancia_cm` cada ~60 s con `Authorization: Bearer …`.
+3. El ESP32 envía `distancia_cm` cada 10 s con `Authorization: Bearer …`. El listado web recarga solo esos datos, sin refrescar la página.
 4. `NivelTachoService` convierte distancia a %:  
    `clamp(100 * (vacio - distancia) / (vacio - lleno))`.
 5. Al superar el umbral (histéresis: entra en umbral, sale en umbral−10) se abre o actualiza un `Reporte` `Contenedor IoT` y se manda correo.
@@ -39,8 +39,8 @@ La UI municipal sigue siendo Inertia + sesión. El ESP32 **no** usa login de usu
 
 | Campo | Significado |
 | --- | --- |
-| `distancia_vacio_cm` | Sensor a fondo (tacho vacío), p. ej. 80 |
-| `distancia_lleno_cm` | Sensor a la superficie cuando está al tope, p. ej. 8 |
+| `distancia_vacio_cm` | Sensor en la tapa hasta el fondo. Tacho de 75 cm: 75 |
+| `distancia_lleno_cm` | Sensor hasta la superficie al tope. Con el HC-SR04 en la tapa: 5 |
 | `umbral_alerta` | % a partir del cual hay alerta (default 80). ≥95% => estado `Lleno` |
 
 Estados: `Operativo`, `Alerta`, `Lleno`, `Inactivo`.
