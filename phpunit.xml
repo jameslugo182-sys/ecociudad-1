@@ -16,6 +16,8 @@
         <include>
             <directory>app</directory>
             <directory>routes</directory>
+            <directory>database</directory>
+            <file>bootstrap/app.php</file>
         </include>
     </source>
     <php>

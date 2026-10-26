@@ -106,6 +106,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
+            $table->dropUnique(['colaborador_id']);
             $table->dropConstrainedForeignId('colaborador_id');
         });
 
