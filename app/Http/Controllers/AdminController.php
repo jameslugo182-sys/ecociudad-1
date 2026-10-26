@@ -16,7 +16,7 @@ use Inertia\Response;
 
 class AdminController extends Controller
 {
-    private const ESTADOS = ['Pendiente', 'Asignado', 'En atención', 'Atendido'];
+    private const ESTADOS = ['Pendiente', 'Asignado', Reporte::ESTADO_EN_ATENCION, 'Atendido'];
 
     /**
      * Cambios de estado permitidos desde el panel administrativo.
@@ -25,9 +25,9 @@ class AdminController extends Controller
      */
     private const TRANSICIONES = [
         'Pendiente' => ['Asignado'],
-        'Asignado' => ['Pendiente', 'En atención', 'Atendido'],
-        'En atención' => ['Asignado', 'Atendido'],
-        'Atendido' => ['En atención'],
+        'Asignado' => ['Pendiente', Reporte::ESTADO_EN_ATENCION, 'Atendido'],
+        Reporte::ESTADO_EN_ATENCION => ['Asignado', 'Atendido'],
+        'Atendido' => [Reporte::ESTADO_EN_ATENCION],
     ];
 
     public function __construct(
@@ -82,7 +82,7 @@ class AdminController extends Controller
             'resumen' => [
                 'total' => Reporte::count(),
                 'pendientes' => (int) ($conteos['Pendiente'] ?? 0),
-                'asignados' => (int) (($conteos['Asignado'] ?? 0) + ($conteos['En atención'] ?? 0)),
+                'asignados' => (int) (($conteos['Asignado'] ?? 0) + ($conteos[Reporte::ESTADO_EN_ATENCION] ?? 0)),
                 'atendidos' => (int) ($conteos['Atendido'] ?? 0),
             ],
             'estados' => self::ESTADOS,
@@ -175,7 +175,7 @@ class AdminController extends Controller
 
         $reportes = Reporte::query()
             ->where('assigned_to', $validated['assigned_to'])
-            ->whereIn('estado', ['Asignado', 'En atención'])
+            ->whereIn('estado', ['Asignado', Reporte::ESTADO_EN_ATENCION])
             ->orderByRaw('prioridad IS NULL, prioridad ASC')
             ->oldest()
             ->get();

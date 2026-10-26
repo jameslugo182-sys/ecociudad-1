@@ -16,6 +16,8 @@ class EcoCiudadFlowTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const REPORTES_INDEX = 'reportes.index';
+
     public function test_each_role_can_only_access_its_own_module(): void
     {
         $ciudadano = User::factory()->create(['rol' => 'ciudadano']);
@@ -24,9 +26,9 @@ class EcoCiudadFlowTest extends TestCase
 
         $this->actingAs($ciudadano)->get(route('admin.dashboard'))->assertForbidden();
         $this->actingAs($ciudadano)->get(route('limpieza.dashboard'))->assertForbidden();
-        $this->actingAs($municipal)->get(route('reportes.index'))->assertForbidden();
+        $this->actingAs($municipal)->get(route(self::REPORTES_INDEX))->assertForbidden();
         $this->actingAs($limpieza)->get(route('admin.dashboard'))->assertForbidden();
-        $this->actingAs($limpieza)->get(route('reportes.index'))->assertForbidden();
+        $this->actingAs($limpieza)->get(route(self::REPORTES_INDEX))->assertForbidden();
     }
 
     public function test_citizen_only_sees_their_own_reports(): void
@@ -37,7 +39,7 @@ class EcoCiudadFlowTest extends TestCase
         $this->crearReporte($otroCiudadano);
 
         $this->actingAs($ciudadano)
-            ->get(route('reportes.index'))
+            ->get(route(self::REPORTES_INDEX))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Reportes/Index')

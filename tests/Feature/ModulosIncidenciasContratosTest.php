@@ -25,6 +25,26 @@ class ModulosIncidenciasContratosTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const REPORTES_STORE = 'reportes.store';
+
+    private const ADMIN_REPORTES_ASIGNAR = 'admin.reportes.asignar';
+
+    private const ADMIN_REPORTES_ESTADO = 'admin.reportes.estado';
+
+    private const EN_ATENCION = 'En atención';
+
+    private const ADMINISTRACION_CONTRATOS_STORE = 'administracion.contratos.store';
+
+    private const ADMINISTRACION_CONTRATOS_UPDATE = 'administracion.contratos.update';
+
+    private const CON_D_022 = 'CON-D-022';
+
+    private const ADMINISTRACION_CONTRATOS_INDEX = 'administracion.contratos.index';
+
+    private const OPERARIO_ECOCIUDAD_PE = 'operario@ecociudad.pe';
+
+    private const PASSWORD_2026 = 'Password-2026';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -42,7 +62,7 @@ class ModulosIncidenciasContratosTest extends TestCase
         $ciudadano = User::factory()->create(['rol' => 'ciudadano']);
 
         $this->actingAs($ciudadano)
-            ->post(route('reportes.store'), [
+            ->post(route(self::REPORTES_STORE), [
                 'foto' => $this->imagenFalsa(),
                 'latitud' => -12.0650,
                 'longitud' => -75.2100,
@@ -65,7 +85,7 @@ class ModulosIncidenciasContratosTest extends TestCase
         $ciudadano = User::factory()->create(['rol' => 'ciudadano']);
 
         $this->actingAs($ciudadano)
-            ->post(route('reportes.store'), [
+            ->post(route(self::REPORTES_STORE), [
                 'foto' => UploadedFile::fake()->create('documento.pdf', 20, 'application/pdf'),
                 'latitud' => 95,
                 'longitud' => -200,
@@ -75,7 +95,7 @@ class ModulosIncidenciasContratosTest extends TestCase
             ->assertSessionHasErrors(['foto', 'latitud', 'longitud']);
 
         $this->actingAs($ciudadano)
-            ->post(route('reportes.store'), [
+            ->post(route(self::REPORTES_STORE), [
                 'foto' => $this->imagenFalsa()->size(10241),
                 'latitud' => -12.06,
                 'longitud' => -75.21,
@@ -96,7 +116,7 @@ class ModulosIncidenciasContratosTest extends TestCase
 
         foreach ([$ciudadano, $inactivo] as $destino) {
             $this->actingAs($municipal)
-                ->patch(route('admin.reportes.asignar', $reporte), ['assigned_to' => $destino->id])
+                ->patch(route(self::ADMIN_REPORTES_ASIGNAR, $reporte), ['assigned_to' => $destino->id])
                 ->assertSessionHasErrors('assigned_to');
         }
 
@@ -112,21 +132,21 @@ class ModulosIncidenciasContratosTest extends TestCase
         $reporte = $this->crearReporte($ciudadano, ['estado' => 'Asignado', 'assigned_to' => $limpieza->id]);
 
         $this->actingAs($municipal)
-            ->patch(route('admin.reportes.estado', $reporte), ['estado' => 'Atendido'])
+            ->patch(route(self::ADMIN_REPORTES_ESTADO, $reporte), ['estado' => 'Atendido'])
             ->assertRedirect();
 
         $this->assertNotNull($reporte->fresh()->atendido_at);
         Notification::assertSentToTimes($ciudadano, ReporteAtendido::class, 1);
 
         $this->actingAs($municipal)
-            ->patch(route('admin.reportes.estado', $reporte), ['estado' => 'En atención'])
+            ->patch(route(self::ADMIN_REPORTES_ESTADO, $reporte), ['estado' => self::EN_ATENCION])
             ->assertRedirect();
 
         $this->assertNull($reporte->fresh()->atendido_at);
         Notification::assertSentToTimes($ciudadano, ReporteAtendido::class, 1);
 
         $this->actingAs($municipal)
-            ->patch(route('admin.reportes.estado', $reporte), ['estado' => 'Inventado'])
+            ->patch(route(self::ADMIN_REPORTES_ESTADO, $reporte), ['estado' => 'Inventado'])
             ->assertSessionHasErrors('estado');
     }
 
@@ -137,7 +157,7 @@ class ModulosIncidenciasContratosTest extends TestCase
         $ciudadano = User::factory()->create(['rol' => 'ciudadano']);
         $reporte = $this->crearReporte($ciudadano);
 
-        foreach (['Atendido', 'En atención', 'Asignado'] as $estado) {
+        foreach (['Atendido', self::EN_ATENCION, 'Asignado'] as $estado) {
             $this->actingAs($administrador)
                 ->patch(route('administracion.incidencias.estado', $reporte), ['estado' => $estado])
                 ->assertSessionHasErrors('estado');
@@ -156,23 +176,23 @@ class ModulosIncidenciasContratosTest extends TestCase
         $limpieza = User::factory()->create(['rol' => 'area_limpieza']);
         $reporte = $this->crearReporte($ciudadano, ['assigned_to' => $limpieza->id]);
 
-        $recorrido = ['Asignado', 'En atención', 'Asignado', 'Pendiente', 'Asignado', 'En atención', 'En atención', 'Atendido', 'En atención'];
+        $recorrido = ['Asignado', self::EN_ATENCION, 'Asignado', 'Pendiente', 'Asignado', self::EN_ATENCION, self::EN_ATENCION, 'Atendido', self::EN_ATENCION];
 
         foreach ($recorrido as $estado) {
             $this->actingAs($municipal)
-                ->patch(route('admin.reportes.estado', $reporte), ['estado' => $estado])
+                ->patch(route(self::ADMIN_REPORTES_ESTADO, $reporte), ['estado' => $estado])
                 ->assertSessionHasNoErrors();
 
             $this->assertSame($estado, $reporte->fresh()->estado);
         }
 
         $this->actingAs($municipal)
-            ->patch(route('admin.reportes.estado', $reporte), ['estado' => 'Atendido'])
+            ->patch(route(self::ADMIN_REPORTES_ESTADO, $reporte), ['estado' => 'Atendido'])
             ->assertSessionHasNoErrors();
 
         foreach (['Asignado', 'Pendiente'] as $estado) {
             $this->actingAs($municipal)
-                ->patch(route('admin.reportes.estado', $reporte), ['estado' => $estado])
+                ->patch(route(self::ADMIN_REPORTES_ESTADO, $reporte), ['estado' => $estado])
                 ->assertSessionHasErrors('estado');
         }
 
@@ -187,9 +207,9 @@ class ModulosIncidenciasContratosTest extends TestCase
         $primero = User::factory()->create(['rol' => 'area_limpieza']);
         $segundo = User::factory()->create(['rol' => 'area_limpieza']);
 
-        $activo = $this->crearReporte($ciudadano, ['estado' => 'En atención', 'assigned_to' => $primero->id]);
+        $activo = $this->crearReporte($ciudadano, ['estado' => self::EN_ATENCION, 'assigned_to' => $primero->id]);
         $this->actingAs($municipal)
-            ->patch(route('admin.reportes.asignar', $activo), ['assigned_to' => $segundo->id])
+            ->patch(route(self::ADMIN_REPORTES_ASIGNAR, $activo), ['assigned_to' => $segundo->id])
             ->assertSessionHasNoErrors();
         $this->assertDatabaseHas('reportes', ['id' => $activo->id, 'estado' => 'Asignado', 'assigned_to' => $segundo->id]);
 
@@ -199,7 +219,7 @@ class ModulosIncidenciasContratosTest extends TestCase
             'atendido_at' => now(),
         ]);
         $this->actingAs($municipal)
-            ->patch(route('admin.reportes.asignar', $cerrado), ['assigned_to' => $segundo->id])
+            ->patch(route(self::ADMIN_REPORTES_ASIGNAR, $cerrado), ['assigned_to' => $segundo->id])
             ->assertSessionHasErrors('assigned_to');
         $this->assertDatabaseHas('reportes', ['id' => $cerrado->id, 'estado' => 'Atendido', 'assigned_to' => $primero->id]);
     }
@@ -214,17 +234,17 @@ class ModulosIncidenciasContratosTest extends TestCase
         [$cargo, $area] = $this->catalogos();
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo, $area))
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo, $area))
             ->assertSessionHasNoErrors();
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo, $area, [
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo, $area, [
                 'documento' => '81234567',
             ]))
             ->assertSessionHasErrors('numero');
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo, $area, [
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo, $area, [
                 'documento' => '81234567',
                 'numero' => 'CON-2026-FECHAS',
                 'fecha_inicio' => now()->addMonth()->toDateString(),
@@ -241,13 +261,13 @@ class ModulosIncidenciasContratosTest extends TestCase
         [$cargo, $area] = $this->catalogos();
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo, $area))
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo, $area))
             ->assertSessionHasNoErrors();
 
         $contrato = Contrato::query()->firstOrFail();
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.update', $contrato), $this->payloadContrato($cargo, $area, [
+            ->post(route(self::ADMINISTRACION_CONTRATOS_UPDATE, $contrato), $this->payloadContrato($cargo, $area, [
                 'remuneracion' => 2500,
                 'telefono' => '999111222',
             ]))
@@ -263,7 +283,7 @@ class ModulosIncidenciasContratosTest extends TestCase
         [$cargo, $area] = $this->catalogos();
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo, $area))
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo, $area))
             ->assertSessionHasNoErrors();
 
         $vigente = Contrato::query()->firstOrFail();
@@ -280,7 +300,7 @@ class ModulosIncidenciasContratosTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.update', $anterior), $this->payloadContrato($cargo, $area, [
+            ->post(route(self::ADMINISTRACION_CONTRATOS_UPDATE, $anterior), $this->payloadContrato($cargo, $area, [
                 'numero' => 'CON-2024-ANT',
                 'estado' => 'Finalizado',
                 'fecha_inicio' => now()->subMonth()->toDateString(),
@@ -295,11 +315,11 @@ class ModulosIncidenciasContratosTest extends TestCase
         [$cargo, $area] = $this->catalogos();
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo, $area))
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo, $area))
             ->assertSessionHasNoErrors();
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo, $area, [
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo, $area, [
                 'numero' => 'CON-2026-RENOV',
                 'telefono' => '999000111',
                 'fecha_inicio' => now()->addYear()->addDay()->toDateString(),
@@ -321,7 +341,7 @@ class ModulosIncidenciasContratosTest extends TestCase
         [$cargo, $area] = $this->catalogos();
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo, $area))
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo, $area))
             ->assertSessionHasNoErrors();
 
         $solapado = $this->payloadContrato($cargo, $area, [
@@ -332,7 +352,7 @@ class ModulosIncidenciasContratosTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $solapado)
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $solapado)
             ->assertSessionHasErrors('fecha_inicio');
 
         $this->assertDatabaseCount('contratos', 1);
@@ -341,7 +361,7 @@ class ModulosIncidenciasContratosTest extends TestCase
         Contrato::query()->update(['estado' => 'Cancelado']);
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $solapado)
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $solapado)
             ->assertSessionHasNoErrors();
         $this->assertDatabaseCount('contratos', 2);
     }
@@ -351,21 +371,21 @@ class ModulosIncidenciasContratosTest extends TestCase
         $admin = User::factory()->create(['rol' => 'administrador']);
         [$cargo, $area] = $this->catalogos();
 
-        foreach ([['70000021', 'CON-D-021'], ['70000022', 'CON-D-022']] as [$documento, $numero]) {
+        foreach ([['70000021', 'CON-D-021'], ['70000022', self::CON_D_022]] as [$documento, $numero]) {
             $this->actingAs($admin)
-                ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo, $area, [
+                ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo, $area, [
                     'documento' => $documento,
                     'numero' => $numero,
                 ]))
                 ->assertSessionHasNoErrors();
         }
 
-        $segundo = Contrato::query()->where('numero', 'CON-D-022')->firstOrFail();
+        $segundo = Contrato::query()->where('numero', self::CON_D_022)->firstOrFail();
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.update', $segundo), $this->payloadContrato($cargo, $area, [
+            ->post(route(self::ADMINISTRACION_CONTRATOS_UPDATE, $segundo), $this->payloadContrato($cargo, $area, [
                 'documento' => '70000021',
-                'numero' => 'CON-D-022',
+                'numero' => self::CON_D_022,
             ]))
             ->assertSessionHasErrors('documento');
     }
@@ -377,7 +397,7 @@ class ModulosIncidenciasContratosTest extends TestCase
         [$cargo, $area] = $this->catalogos();
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo, $area, [
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo, $area, [
                 'archivo_contrato' => UploadedFile::fake()->create('contrato.exe', 10, 'application/octet-stream'),
             ]))
             ->assertSessionHasErrors('archivo_contrato');
@@ -385,7 +405,7 @@ class ModulosIncidenciasContratosTest extends TestCase
         $this->assertDatabaseCount('contratos', 0);
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo, $area, [
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo, $area, [
                 'archivo_contrato' => UploadedFile::fake()->create('contrato.pdf', 50, 'application/pdf'),
             ]))
             ->assertSessionHasNoErrors();
@@ -398,12 +418,12 @@ class ModulosIncidenciasContratosTest extends TestCase
         $admin = User::factory()->create(['rol' => 'administrador']);
         [$cargo, $area] = $this->catalogos();
 
-        $this->actingAs($admin)->post(route('administracion.contratos.store'), $this->payloadContrato($cargo, $area, [
+        $this->actingAs($admin)->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo, $area, [
             'documento' => '70000001',
             'apellido_paterno' => 'Quispe',
             'numero' => 'CON-A-001',
         ]))->assertSessionHasNoErrors();
-        $this->actingAs($admin)->post(route('administracion.contratos.store'), $this->payloadContrato($cargo, $area, [
+        $this->actingAs($admin)->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo, $area, [
             'documento' => '70000002',
             'apellido_paterno' => 'Mamani',
             'numero' => 'CON-B-002',
@@ -411,7 +431,7 @@ class ModulosIncidenciasContratosTest extends TestCase
         ]))->assertSessionHasNoErrors();
 
         $this->actingAs($admin)
-            ->get(route('administracion.contratos.index', ['buscar' => 'QUISPE']))
+            ->get(route(self::ADMINISTRACION_CONTRATOS_INDEX, ['buscar' => 'QUISPE']))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Contratos/Registro')
@@ -419,14 +439,14 @@ class ModulosIncidenciasContratosTest extends TestCase
                 ->where('contratos.data.0.numero', 'CON-A-001'));
 
         $this->actingAs($admin)
-            ->get(route('administracion.contratos.index', ['estado' => 'Suspendido']))
+            ->get(route(self::ADMINISTRACION_CONTRATOS_INDEX, ['estado' => 'Suspendido']))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('contratos.data', 1)
                 ->where('contratos.data.0.numero', 'CON-B-002'));
 
         $this->actingAs($admin)
-            ->get(route('administracion.contratos.index', ['estado' => 'Inventado']))
+            ->get(route(self::ADMINISTRACION_CONTRATOS_INDEX, ['estado' => 'Inventado']))
             ->assertSessionHasErrors('estado');
     }
 
@@ -437,7 +457,7 @@ class ModulosIncidenciasContratosTest extends TestCase
 
         foreach ([['70000011', 'CON-C-011'], ['70000012', 'CON-C-012']] as [$documento, $numero]) {
             $this->actingAs($admin)
-                ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo, $area, [
+                ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo, $area, [
                     'documento' => $documento,
                     'numero' => $numero,
                 ]))
@@ -448,10 +468,10 @@ class ModulosIncidenciasContratosTest extends TestCase
         $segundo = Colaborador::where('documento', '70000012')->firstOrFail();
         $cuenta = fn (Colaborador $colaborador) => [
             'colaborador_id' => $colaborador->id,
-            'email' => 'operario@ecociudad.pe',
+            'email' => self::OPERARIO_ECOCIUDAD_PE,
             'rol' => 'area_limpieza',
-            'password' => 'Password-2026',
-            'password_confirmation' => 'Password-2026',
+            'password' => self::PASSWORD_2026,
+            'password_confirmation' => self::PASSWORD_2026,
         ];
 
         $this->actingAs($admin)
@@ -461,7 +481,7 @@ class ModulosIncidenciasContratosTest extends TestCase
             ->post(route('administracion.contratos.usuarios.store'), $cuenta($segundo))
             ->assertSessionHasErrors('email');
 
-        $usuario = User::where('email', 'operario@ecociudad.pe')->firstOrFail();
+        $usuario = User::where('email', self::OPERARIO_ECOCIUDAD_PE)->firstOrFail();
 
         $this->actingAs($admin)
             ->patch(route('administracion.contratos.usuarios.estado', $usuario), ['activo' => false])
@@ -469,7 +489,7 @@ class ModulosIncidenciasContratosTest extends TestCase
         $this->assertFalse($usuario->fresh()->activo);
 
         $this->post(route('logout'));
-        $this->post(route('login'), ['email' => 'operario@ecociudad.pe', 'password' => 'Password-2026']);
+        $this->post(route('login'), ['email' => self::OPERARIO_ECOCIUDAD_PE, 'password' => self::PASSWORD_2026]);
         $this->assertGuest();
     }
 
@@ -479,14 +499,14 @@ class ModulosIncidenciasContratosTest extends TestCase
         $limpieza = User::factory()->create(['rol' => 'area_limpieza']);
         $municipal = User::factory()->create(['rol' => 'personal_municipal']);
 
-        $this->get(route('administracion.contratos.index'))->assertRedirect(route('login'));
+        $this->get(route(self::ADMINISTRACION_CONTRATOS_INDEX))->assertRedirect(route('login'));
 
         foreach ([$ciudadano, $limpieza, $municipal] as $usuario) {
             $this->actingAs($usuario)
-                ->get(route('administracion.contratos.index'))
+                ->get(route(self::ADMINISTRACION_CONTRATOS_INDEX))
                 ->assertForbidden();
             $this->actingAs($usuario)
-                ->post(route('administracion.contratos.store'), [])
+                ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), [])
                 ->assertForbidden();
         }
     }

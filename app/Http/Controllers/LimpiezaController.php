@@ -13,6 +13,10 @@ use Inertia\Response;
 
 class LimpiezaController extends Controller
 {
+    private const CAMION_PERSONAL = 'camion.personal';
+
+    private const USERS_ID = 'users.id';
+
     public function dashboard(Request $request): Response
     {
         $usuarioId = $request->user()->id;
@@ -21,7 +25,7 @@ class LimpiezaController extends Controller
                 $query->where('assigned_to', $usuarioId)
                     ->orWhereHas('rutas', function ($rutaQuery) use ($usuarioId) {
                         $rutaQuery->whereIn('rutas_recoleccion.estado', RutaRecoleccion::ESTADOS_ACTIVAS)
-                            ->whereHas('camion.personal', fn ($personalQuery) => $personalQuery->where('users.id', $usuarioId));
+                            ->whereHas(self::CAMION_PERSONAL, fn ($personalQuery) => $personalQuery->where(self::USERS_ID, $usuarioId));
                     });
             })
             ->with('user:id,name')
@@ -34,10 +38,10 @@ class LimpiezaController extends Controller
             'reportes' => $reportes,
             'rutaAsignada' => $this->rutaAsignada($request),
             'resumen' => [
-                'pendientes' => $reportes->whereIn('estado', ['Asignado', 'En atención'])->count(),
+                'pendientes' => $reportes->whereIn('estado', ['Asignado', Reporte::ESTADO_EN_ATENCION])->count(),
                 'atendidos' => $reportes->where('estado', 'Atendido')->count(),
                 'conRuta' => $reportes
-                    ->whereIn('estado', ['Asignado', 'En atención'])
+                    ->whereIn('estado', ['Asignado', Reporte::ESTADO_EN_ATENCION])
                     ->whereNotNull('ruta_orden')
                     ->count(),
             ],
@@ -56,7 +60,7 @@ class LimpiezaController extends Controller
         $this->autorizarAsignacion($request, $reporte);
         abort_unless($reporte->estado === 'Asignado', 422, 'La incidencia no puede iniciarse en su estado actual.');
 
-        $reporte->update(['estado' => 'En atención']);
+        $reporte->update(['estado' => Reporte::ESTADO_EN_ATENCION]);
 
         return back()->with('success', "Atención del reporte #{$reporte->id} iniciada.");
     }
@@ -94,7 +98,7 @@ class LimpiezaController extends Controller
     {
         $perteneceAlEquipo = $reporte->rutas()
             ->whereIn('rutas_recoleccion.estado', RutaRecoleccion::ESTADOS_ACTIVAS)
-            ->whereHas('camion.personal', fn ($query) => $query->where('users.id', $request->user()->id))
+            ->whereHas(self::CAMION_PERSONAL, fn ($query) => $query->where(self::USERS_ID, $request->user()->id))
             ->exists();
 
         abort_unless($reporte->assigned_to === $request->user()->id || $perteneceAlEquipo, 403);
@@ -105,11 +109,11 @@ class LimpiezaController extends Controller
         $ruta = RutaRecoleccion::query()
             ->activas()
             ->whereHas(
-                'camion.personal',
-                fn ($query) => $query->where('users.id', $request->user()->id)
+                self::CAMION_PERSONAL,
+                fn ($query) => $query->where(self::USERS_ID, $request->user()->id)
             )
             ->with([
-                'camion.personal' => fn ($query) => $query->select('users.id', 'name'),
+                self::CAMION_PERSONAL => fn ($query) => $query->select(self::USERS_ID, 'name'),
                 'reportes.user:id,name',
             ])
             ->latest('fecha')
@@ -129,7 +133,7 @@ class LimpiezaController extends Controller
             );
 
             $ruta->update([
-                'estado' => $todasAtendidas ? 'Finalizada' : 'En curso',
+                'estado' => $todasAtendidas ? 'Finalizada' : RutaRecoleccion::ESTADO_EN_CURSO,
                 'iniciada_at' => $ruta->iniciada_at ?? now(),
                 'finalizada_at' => $todasAtendidas ? now() : null,
             ]);

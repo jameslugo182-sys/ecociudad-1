@@ -15,6 +15,10 @@ use Inertia\Response;
 
 class MantenimientoVehiculoController extends Controller
 {
+    private const TIPO_ID_NOMBRE = 'tipo:id,nombre';
+
+    private const SOLICITANTE_ID_NAME = 'solicitante:id,name';
+
     public function registro(): Response
     {
         return Inertia::render('Administracion/Mantenimiento/Registro', [
@@ -27,7 +31,7 @@ class MantenimientoVehiculoController extends Controller
                 ->orderBy('nombre')
                 ->get(['id', 'nombre']),
             'registros' => MantenimientoVehiculo::query()
-                ->with(['camion:id,codigo,placa', 'tipo:id,nombre', 'solicitante:id,name'])
+                ->with(['camion:id,codigo,placa', self::TIPO_ID_NOMBRE, self::SOLICITANTE_ID_NAME])
                 ->latest()
                 ->take(20)
                 ->get(),
@@ -38,8 +42,8 @@ class MantenimientoVehiculoController extends Controller
     {
         return Inertia::render('Administracion/Mantenimiento/EnCurso', [
             'mantenimientos' => MantenimientoVehiculo::query()
-                ->where('estado', 'En curso')
-                ->with(['camion:id,codigo,placa,marca,modelo,foto_path', 'tipo:id,nombre', 'solicitante:id,name'])
+                ->where('estado', MantenimientoVehiculo::ESTADO_EN_CURSO)
+                ->with(['camion:id,codigo,placa,marca,modelo,foto_path', self::TIPO_ID_NOMBRE, self::SOLICITANTE_ID_NAME])
                 ->latest('iniciado_at')
                 ->latest()
                 ->get(),
@@ -56,8 +60,8 @@ class MantenimientoVehiculoController extends Controller
             'mantenimientos' => MantenimientoVehiculo::query()
                 ->with([
                     'camion:id,codigo,placa',
-                    'tipo:id,nombre',
-                    'solicitante:id,name',
+                    self::TIPO_ID_NOMBRE,
+                    self::SOLICITANTE_ID_NAME,
                     'finalizador:id,name',
                 ])
                 ->when(
@@ -108,7 +112,7 @@ class MantenimientoVehiculoController extends Controller
                 'tipo_mantenimiento_id' => $validated['tipo_mantenimiento_id'],
                 'solicitado_por' => $request->user()->id,
                 'motivo' => $validated['motivo'],
-                'estado' => 'En curso',
+                'estado' => MantenimientoVehiculo::ESTADO_EN_CURSO,
                 'estado_anterior' => $camion->estado,
                 'iniciado_at' => now(),
             ]);
@@ -123,7 +127,7 @@ class MantenimientoVehiculoController extends Controller
 
     public function finalizar(Request $request, MantenimientoVehiculo $mantenimiento): RedirectResponse
     {
-        abort_unless($mantenimiento->estado === 'En curso', 422, 'El mantenimiento ya fue cerrado.');
+        abort_unless($mantenimiento->estado === MantenimientoVehiculo::ESTADO_EN_CURSO, 422, 'El mantenimiento ya fue cerrado.');
 
         DB::transaction(function () use ($request, $mantenimiento) {
             $mantenimiento->load('camion');

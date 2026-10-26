@@ -20,6 +20,14 @@ class AuditoriaCalidadTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const ADMIN_REPORTES_INDEX = 'admin.reportes.index';
+
+    private const ADMINISTRACION_TACHOS_INDEX = 'administracion.tachos.index';
+
+    private const TACHO_MERCADO_CENTRAL = 'Tacho Mercado Central';
+
+    private const ADMINISTRACION_VEHICULOS_INDEX = 'administracion.vehiculos.index';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -64,7 +72,7 @@ class AuditoriaCalidadTest extends TestCase
         $this->crearReporte($ciudadano, ['estado' => 'Atendido', 'descripcion' => 'Lodo en vereda', 'atendido_at' => now()]);
 
         $this->actingAs($municipal)
-            ->get(route('admin.reportes.index', ['estado' => 'Pendiente', 'buscar' => 'Bolsa']))
+            ->get(route(self::ADMIN_REPORTES_INDEX, ['estado' => 'Pendiente', 'buscar' => 'Bolsa']))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Admin/Dashboard')
@@ -88,9 +96,9 @@ class AuditoriaCalidadTest extends TestCase
         $ciudadano = User::factory()->create(['rol' => 'ciudadano']);
 
         $this->actingAs($municipal)
-            ->from(route('admin.reportes.index'))
+            ->from(route(self::ADMIN_REPORTES_INDEX))
             ->post(route('admin.rutas.generar'), ['assigned_to' => $limpieza->id])
-            ->assertRedirect(route('admin.reportes.index'))
+            ->assertRedirect(route(self::ADMIN_REPORTES_INDEX))
             ->assertSessionHas('error');
 
         $cerca = $this->crearReporte($ciudadano, [
@@ -107,9 +115,9 @@ class AuditoriaCalidadTest extends TestCase
         ]);
 
         $this->actingAs($municipal)
-            ->from(route('admin.reportes.index'))
+            ->from(route(self::ADMIN_REPORTES_INDEX))
             ->post(route('admin.rutas.generar'), ['assigned_to' => $limpieza->id])
-            ->assertRedirect(route('admin.reportes.index'))
+            ->assertRedirect(route(self::ADMIN_REPORTES_INDEX))
             ->assertSessionHas('success');
 
         $this->assertSame(1, $cerca->fresh()->ruta_orden);
@@ -122,9 +130,9 @@ class AuditoriaCalidadTest extends TestCase
         $tacho = $this->crearTacho($administrador);
 
         $this->actingAs($administrador)
-            ->from(route('administracion.tachos.index'))
+            ->from(route(self::ADMINISTRACION_TACHOS_INDEX))
             ->put(route('administracion.tachos.update', $tacho), [
-                'nombre' => 'Tacho Mercado Central',
+                'nombre' => self::TACHO_MERCADO_CENTRAL,
                 'direccion' => 'Jr. Real',
                 'latitud' => -12.0464,
                 'longitud' => -75.2195,
@@ -133,18 +141,18 @@ class AuditoriaCalidadTest extends TestCase
                 'umbral_alerta' => 85,
                 'activo' => false,
             ])
-            ->assertRedirect(route('administracion.tachos.index'))
+            ->assertRedirect(route(self::ADMINISTRACION_TACHOS_INDEX))
             ->assertSessionHasNoErrors();
 
         $tacho->refresh();
-        $this->assertSame('Tacho Mercado Central', $tacho->nombre);
+        $this->assertSame(self::TACHO_MERCADO_CENTRAL, $tacho->nombre);
         $this->assertSame(Tacho::ESTADO_INACTIVO, $tacho->estado);
         $this->assertFalse($tacho->activo);
 
         $this->actingAs($administrador)
-            ->from(route('administracion.tachos.index'))
+            ->from(route(self::ADMINISTRACION_TACHOS_INDEX))
             ->put(route('administracion.tachos.update', $tacho), [
-                'nombre' => 'Tacho Mercado Central',
+                'nombre' => self::TACHO_MERCADO_CENTRAL,
                 'direccion' => 'Jr. Real',
                 'latitud' => -12.0464,
                 'longitud' => -75.2195,
@@ -166,9 +174,9 @@ class AuditoriaCalidadTest extends TestCase
                 ->where('tachos.0.codigo', $tacho->codigo));
 
         $this->actingAs($administrador)
-            ->from(route('administracion.tachos.index'))
+            ->from(route(self::ADMINISTRACION_TACHOS_INDEX))
             ->post(route('administracion.tachos.token', $tacho))
-            ->assertRedirect(route('administracion.tachos.index'))
+            ->assertRedirect(route(self::ADMINISTRACION_TACHOS_INDEX))
             ->assertSessionHas('device_token');
     }
 
@@ -250,9 +258,9 @@ class AuditoriaCalidadTest extends TestCase
         ]);
 
         $this->actingAs($administrador)
-            ->from(route('administracion.vehiculos.index'))
+            ->from(route(self::ADMINISTRACION_VEHICULOS_INDEX))
             ->delete(route('administracion.vehiculos.destroy', $camion))
-            ->assertRedirect(route('administracion.vehiculos.index'))
+            ->assertRedirect(route(self::ADMINISTRACION_VEHICULOS_INDEX))
             ->assertSessionHasErrors('camion');
 
         $this->assertDatabaseHas('camiones', ['id' => $camion->id]);
@@ -264,9 +272,9 @@ class AuditoriaCalidadTest extends TestCase
         ]);
 
         $this->actingAs($administrador)
-            ->from(route('administracion.vehiculos.index'))
+            ->from(route(self::ADMINISTRACION_VEHICULOS_INDEX))
             ->delete(route('administracion.vehiculos.destroy', $libre))
-            ->assertRedirect(route('administracion.vehiculos.index'))
+            ->assertRedirect(route(self::ADMINISTRACION_VEHICULOS_INDEX))
             ->assertSessionHasNoErrors();
 
         $this->assertDatabaseMissing('camiones', ['id' => $libre->id]);
@@ -317,7 +325,7 @@ class AuditoriaCalidadTest extends TestCase
     private function crearTacho(User $administrador): Tacho
     {
         $this->actingAs($administrador)
-            ->from(route('administracion.tachos.index'))
+            ->from(route(self::ADMINISTRACION_TACHOS_INDEX))
             ->post(route('administracion.tachos.store'), [
                 'nombre' => 'Tacho Plaza Huamanmarca',
                 'direccion' => 'Plaza Huamanmarca',

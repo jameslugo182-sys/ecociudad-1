@@ -18,7 +18,17 @@ use Illuminate\Support\Collection;
 
 class InformeOperativoService
 {
+    private const D_M_Y = 'd/m/Y';
+
+    private const ESTADO_COUNT_AS_TOTAL = 'estado, COUNT(*) as total';
+
+    private const APP_TIMEZONE = 'app.timezone';
+
+    private const D_M_Y_H_I = 'd/m/Y H:i';
+
     public const SECCIONES = ['resumen', 'incidencias', 'rutas', 'tachos', 'personal'];
+
+    private const ESTADOS_INCIDENCIA = ['Pendiente', 'Asignado', Reporte::ESTADO_EN_ATENCION, 'Atendido'];
 
     /**
      * @return array{fecha_desde: string, fecha_hasta: string, etiqueta: string, desde: Carbon, hasta: Carbon}
@@ -41,7 +51,7 @@ class InformeOperativoService
         return [
             'fecha_desde' => $desde->toDateString(),
             'fecha_hasta' => $hasta->toDateString(),
-            'etiqueta' => $desde->format('d/m/Y').' – '.$hasta->format('d/m/Y'),
+            'etiqueta' => $desde->format(self::D_M_Y).' – '.$hasta->format(self::D_M_Y),
             'estado' => $validated['estado'] ?? '',
             'desde' => $desde,
             'hasta' => $hasta,
@@ -68,7 +78,7 @@ class InformeOperativoService
     public function resumen(Carbon $desde, Carbon $hasta): array
     {
         $conteos = $this->entreFechas(Reporte::query(), 'created_at', $desde, $hasta)
-            ->selectRaw('estado, COUNT(*) as total')
+            ->selectRaw(self::ESTADO_COUNT_AS_TOTAL)
             ->groupBy('estado')
             ->pluck('total', 'estado');
 
@@ -123,10 +133,10 @@ class InformeOperativoService
             'incidencias' => $paginar
                 ? $listado->through(fn (Reporte $reporte) => $this->filaIncidencia($reporte))
                 : $listado->map(fn (Reporte $reporte) => $this->filaIncidencia($reporte))->values(),
-            'estados' => ['Pendiente', 'Asignado', 'En atención', 'Atendido'],
+            'estados' => self::ESTADOS_INCIDENCIA,
             'porEstado' => $this->conteosEstado(
                 $this->entreFechas(Reporte::query(), 'created_at', $desde, $hasta)
-                    ->selectRaw('estado, COUNT(*) as total')
+                    ->selectRaw(self::ESTADO_COUNT_AS_TOTAL)
                     ->groupBy('estado')
                     ->pluck('total', 'estado')
             ),
@@ -150,7 +160,7 @@ class InformeOperativoService
             ->get()
             ->map(fn (RutaRecoleccion $ruta) => [
                 'id' => $ruta->id,
-                'fecha' => $ruta->fecha?->format('d/m/Y'),
+                'fecha' => $ruta->fecha?->format(self::D_M_Y),
                 'estado' => $ruta->estado,
                 'camion' => $ruta->camion?->codigo.' · '.($ruta->camion?->placa ?? 's/placa'),
                 'paradas' => $ruta->reportes->count(),
@@ -183,7 +193,7 @@ class InformeOperativoService
                 'camion' => $item->camion?->codigo,
                 'tipo' => $item->tipo?->nombre ?? 'Sin tipo',
                 'estado' => $item->estado,
-                'inicio' => $item->iniciado_at?->timezone(config('app.timezone'))->format('d/m/Y H:i'),
+                'inicio' => $item->iniciado_at?->timezone(config(self::APP_TIMEZONE))->format(self::D_M_Y_H_I),
             ]);
 
         return [
@@ -248,7 +258,7 @@ class InformeOperativoService
                     'lecturas' => (int) ($lectura->total ?? 0),
                     'promedioPeriodo' => isset($lectura->promedio) ? round((float) $lectura->promedio, 1) : null,
                     'ultimaLectura' => $tacho->ultima_lectura_at
-                        ? $tacho->ultima_lectura_at->timezone(config('app.timezone'))->format('d/m/Y H:i')
+                        ? $tacho->ultima_lectura_at->timezone(config(self::APP_TIMEZONE))->format(self::D_M_Y_H_I)
                         : null,
                 ];
             }),
@@ -283,12 +293,12 @@ class InformeOperativoService
                 'cargo' => $contrato->cargo?->nombre,
                 'tipo' => $contrato->tipo,
                 'estado' => $contrato->estado,
-                'inicio' => $contrato->fecha_inicio?->format('d/m/Y'),
-                'fin' => $contrato->fecha_fin?->format('d/m/Y'),
+                'inicio' => $contrato->fecha_inicio?->format(self::D_M_Y),
+                'fin' => $contrato->fecha_fin?->format(self::D_M_Y),
             ]);
 
         $porEstadoContrato = Contrato::query()
-            ->selectRaw('estado, COUNT(*) as total')
+            ->selectRaw(self::ESTADO_COUNT_AS_TOTAL)
             ->groupBy('estado')
             ->get()
             ->map(fn ($fila) => [
@@ -369,7 +379,7 @@ class InformeOperativoService
      */
     private function conteosEstado(Collection $conteos): Collection
     {
-        return collect(['Pendiente', 'Asignado', 'En atención', 'Atendido'])
+        return collect(self::ESTADOS_INCIDENCIA)
             ->map(fn (string $estado) => [
                 'label' => $estado,
                 'total' => (int) ($conteos[$estado] ?? 0),
@@ -453,8 +463,8 @@ class InformeOperativoService
             'estado' => $reporte->estado,
             'origen' => $reporte->tacho_id ? 'IoT '.$reporte->tacho?->codigo : 'Ciudadano',
             'responsable' => $reporte->responsable?->name,
-            'registrado' => $reporte->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i'),
-            'atendido' => $reporte->atendido_at?->timezone(config('app.timezone'))->format('d/m/Y H:i'),
+            'registrado' => $reporte->created_at?->timezone(config(self::APP_TIMEZONE))->format(self::D_M_Y_H_I),
+            'atendido' => $reporte->atendido_at?->timezone(config(self::APP_TIMEZONE))->format(self::D_M_Y_H_I),
         ];
     }
 }

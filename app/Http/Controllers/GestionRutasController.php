@@ -21,6 +21,8 @@ use Inertia\Response;
 
 class GestionRutasController extends Controller
 {
+    private const USERS_ID = 'users.id';
+
     public function __construct(
         private readonly TrazadoRutaService $trazado,
         private readonly PlanificadorFlotaService $planificador,
@@ -42,12 +44,12 @@ class GestionRutasController extends Controller
                 'created_at',
             ]),
             'equipos' => $this->camionesDisponibles()
-                ->with(['personal' => fn ($query) => $query->select('users.id', 'name')])
+                ->with(['personal' => fn ($query) => $query->select(self::USERS_ID, 'name')])
                 ->orderBy('codigo')
                 ->get(),
             'rutas' => RutaRecoleccion::query()
                 ->with([
-                    'camion.personal' => fn ($query) => $query->select('users.id', 'name'),
+                    'camion.personal' => fn ($query) => $query->select(self::USERS_ID, 'name'),
                     'reportes.user:id,name',
                 ])
                 ->latest('fecha')
@@ -68,7 +70,7 @@ class GestionRutasController extends Controller
         return Inertia::render('Rutas/Horarios', [
             'rutas' => $this->rutasActivas()
                 ->with([
-                    'camion.personal' => fn ($query) => $query->select('users.id', 'name'),
+                    'camion.personal' => fn ($query) => $query->select(self::USERS_ID, 'name'),
                     'reportes:id,descripcion,estado,latitud,longitud,ruta_orden',
                 ])
                 ->latest('fecha')

@@ -15,6 +15,10 @@ class GestionRutasQualityTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const ADMINISTRACION_RUTAS_STORE = 'administracion.rutas.store';
+
+    private const ADMINISTRACION_RUTAS_PROPONER = 'administracion.rutas.proponer';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -78,11 +82,11 @@ class GestionRutasQualityTest extends TestCase
         $ciudadano = User::factory()->create(['rol' => 'ciudadano']);
 
         $this->actingAs($ciudadano)
-            ->post(route('administracion.rutas.store'), [])
+            ->post(route(self::ADMINISTRACION_RUTAS_STORE), [])
             ->assertForbidden();
 
         $this->actingAs($ciudadano)
-            ->postJson(route('administracion.rutas.proponer'))
+            ->postJson(route(self::ADMINISTRACION_RUTAS_PROPONER))
             ->assertForbidden();
     }
 
@@ -94,7 +98,7 @@ class GestionRutasQualityTest extends TestCase
         $reporte = $this->crearReporte($ciudadano);
 
         $this->actingAs($administrador)
-            ->post(route('administracion.rutas.store'), [
+            ->post(route(self::ADMINISTRACION_RUTAS_STORE), [
                 'camion_id' => $camion->id,
                 'fecha' => today()->toDateString(),
                 'reporte_ids' => [$reporte->id],
@@ -112,7 +116,7 @@ class GestionRutasQualityTest extends TestCase
         $reporte = $this->crearReporte($ciudadano);
 
         $this->actingAs($administrador)
-            ->post(route('administracion.rutas.store'), [
+            ->post(route(self::ADMINISTRACION_RUTAS_STORE), [
                 'camion_id' => $camion->id,
                 'fecha' => today()->toDateString(),
                 'reporte_ids' => [$reporte->id],
@@ -122,7 +126,7 @@ class GestionRutasQualityTest extends TestCase
         $otroCamion = $this->camionConEquipo('INC-02', 'INC-202');
 
         $this->actingAs($administrador)
-            ->post(route('administracion.rutas.store'), [
+            ->post(route(self::ADMINISTRACION_RUTAS_STORE), [
                 'camion_id' => $otroCamion->id,
                 'fecha' => today()->toDateString(),
                 'reporte_ids' => [$reporte->id],
@@ -136,7 +140,7 @@ class GestionRutasQualityTest extends TestCase
         $camion = $this->camionConEquipo();
 
         $this->actingAs($administrador)
-            ->post(route('administracion.rutas.store'), [
+            ->post(route(self::ADMINISTRACION_RUTAS_STORE), [
                 'camion_id' => $camion->id,
                 'fecha' => now()->subDay()->toDateString(),
                 'reporte_ids' => [],
@@ -149,14 +153,14 @@ class GestionRutasQualityTest extends TestCase
         $administrador = User::factory()->create(['rol' => 'administrador']);
 
         $this->actingAs($administrador)
-            ->postJson(route('administracion.rutas.proponer'))
+            ->postJson(route(self::ADMINISTRACION_RUTAS_PROPONER))
             ->assertUnprocessable()
             ->assertJsonValidationErrors('reportes');
 
         $this->crearReporte(User::factory()->create(['rol' => 'ciudadano']));
 
         $this->actingAs($administrador)
-            ->postJson(route('administracion.rutas.proponer'))
+            ->postJson(route(self::ADMINISTRACION_RUTAS_PROPONER))
             ->assertUnprocessable()
             ->assertJsonValidationErrors('equipos');
     }

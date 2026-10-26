@@ -18,6 +18,16 @@ class HorariosYTiposMantenimientoTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const V_07_00 = '07:00';
+
+    private const V_08_00 = '08:00';
+
+    private const TEXTO = '—';
+
+    private const CAMBIO_DE_FRENOS = 'Cambio de frenos';
+
+    private const CAMBIO_DE_FRENOS_Y_DISCOS = 'Cambio de frenos y discos';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -67,7 +77,7 @@ class HorariosYTiposMantenimientoTest extends TestCase
                 'nombre' => 'Vacía',
                 'dias' => [
                     1 => ['manana' => ['inicio' => '', 'fin' => '']],
-                    2 => ['manana' => ['inicio' => '07:00', 'fin' => '']],
+                    2 => ['manana' => ['inicio' => self::V_07_00, 'fin' => '']],
                 ],
             ]))
             ->assertSessionHasErrors('dias');
@@ -106,21 +116,21 @@ class HorariosYTiposMantenimientoTest extends TestCase
     {
         $this->assertSame(0.0, HorarioSemanal::horasEntre(null, '10:00'));
         $this->assertSame(0.0, HorarioSemanal::horasEntre('xx', '10:00'));
-        $this->assertSame(0.0, HorarioSemanal::horasEntre('08:00', 'zz'));
+        $this->assertSame(0.0, HorarioSemanal::horasEntre(self::V_08_00, 'zz'));
         $this->assertSame(8.0, HorarioSemanal::horasEntre('22:00', '06:00'));
 
         $this->assertSame(6.5, HorarioSemanal::totalHoras([
-            1 => ['a' => ['inicio' => '08:00', 'fin' => '14:30'], 'b' => 'no-es-turno'],
+            1 => ['a' => ['inicio' => self::V_08_00, 'fin' => '14:30'], 'b' => 'no-es-turno'],
             2 => 'no-es-dia',
         ]));
 
-        $this->assertSame('—', HorarioSemanal::rango(null));
-        $this->assertSame('—', HorarioSemanal::rango(['inicio' => '08:00']));
+        $this->assertSame(self::TEXTO, HorarioSemanal::rango(null));
+        $this->assertSame(self::TEXTO, HorarioSemanal::rango(['inicio' => self::V_08_00]));
         $this->assertSame('08:00 – 12:00', HorarioSemanal::rango(['inicio' => '08:00:00', 'fin' => '12:00']));
-        $this->assertSame('—', HorarioSemanal::formatearHora('abc'));
+        $this->assertSame(self::TEXTO, HorarioSemanal::formatearHora('abc'));
 
-        $dias = ['1' => ['a' => ['inicio' => '08:00', 'fin' => '09:00']], 2 => 'x'];
-        $this->assertSame(['inicio' => '08:00', 'fin' => '09:00'], HorarioSemanal::celda($dias, 1, 'a'));
+        $dias = ['1' => ['a' => ['inicio' => self::V_08_00, 'fin' => '09:00']], 2 => 'x'];
+        $this->assertSame(['inicio' => self::V_08_00, 'fin' => '09:00'], HorarioSemanal::celda($dias, 1, 'a'));
         $this->assertNull(HorarioSemanal::celda($dias, 1, 'b'));
         $this->assertNull(HorarioSemanal::celda($dias, 2, 'a'));
         $this->assertNull(HorarioSemanal::celda($dias, 3, 'a'));
@@ -132,26 +142,26 @@ class HorariosYTiposMantenimientoTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('administracion.vehiculos.maestros.tipos.store'), [
-                'nombre' => 'Cambio de frenos',
+                'nombre' => self::CAMBIO_DE_FRENOS,
                 'descripcion' => 'Pastillas y discos.',
             ])
             ->assertSessionHasNoErrors();
 
-        $tipo = TipoMantenimiento::where('nombre', 'Cambio de frenos')->firstOrFail();
+        $tipo = TipoMantenimiento::where('nombre', self::CAMBIO_DE_FRENOS)->firstOrFail();
 
         $this->actingAs($admin)
             ->get(route('administracion.vehiculos.maestros.tipos.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Administracion/Mantenimiento/Tipos')
-                ->where('tipos', fn ($tipos) => collect($tipos)->contains('nombre', 'Cambio de frenos')));
+                ->where('tipos', fn ($tipos) => collect($tipos)->contains('nombre', self::CAMBIO_DE_FRENOS)));
 
         $this->actingAs($admin)
             ->put(route('administracion.vehiculos.maestros.tipos.update', $tipo), [
-                'nombre' => 'Cambio de frenos y discos',
+                'nombre' => self::CAMBIO_DE_FRENOS_Y_DISCOS,
             ])
             ->assertSessionHasNoErrors();
-        $this->assertDatabaseHas('tipos_mantenimiento', ['id' => $tipo->id, 'nombre' => 'Cambio de frenos y discos']);
+        $this->assertDatabaseHas('tipos_mantenimiento', ['id' => $tipo->id, 'nombre' => self::CAMBIO_DE_FRENOS_Y_DISCOS]);
 
         $this->actingAs($admin)
             ->patch(route('administracion.vehiculos.maestros.tipos.estado', $tipo), ['activo' => false])
@@ -159,7 +169,7 @@ class HorariosYTiposMantenimientoTest extends TestCase
         $this->assertFalse($tipo->fresh()->activo);
 
         $this->actingAs($admin)
-            ->post(route('administracion.vehiculos.maestros.tipos.store'), ['nombre' => 'Cambio de frenos y discos'])
+            ->post(route('administracion.vehiculos.maestros.tipos.store'), ['nombre' => self::CAMBIO_DE_FRENOS_Y_DISCOS])
             ->assertSessionHasErrors('nombre');
     }
 
@@ -172,10 +182,10 @@ class HorariosYTiposMantenimientoTest extends TestCase
         return [
             'nombre' => 'Plantilla',
             'turnos' => [
-                ['clave' => 'manana', 'nombre' => 'Turno mañana', 'inicio' => '07:00', 'fin' => '13:00'],
+                ['clave' => 'manana', 'nombre' => 'Turno mañana', 'inicio' => self::V_07_00, 'fin' => '13:00'],
             ],
             'dias' => [
-                1 => ['manana' => ['inicio' => '07:00', 'fin' => '13:00']],
+                1 => ['manana' => ['inicio' => self::V_07_00, 'fin' => '13:00']],
             ],
             ...$overrides,
         ];

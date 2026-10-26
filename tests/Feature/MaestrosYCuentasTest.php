@@ -17,6 +17,18 @@ class MaestrosYCuentasTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const SUPERVISOR_GENERAL = 'Supervisor general';
+
+    private const SEDE_SUR = 'Sede sur';
+
+    private const ADMINISTRACION_CONTRATOS_MAESTROS_ROLES_ESTADO = 'administracion.contratos.maestros.roles.estado';
+
+    private const ADMINISTRACION_CONTRATOS_USUARIOS_UPDATE = 'administracion.contratos.usuarios.update';
+
+    private const ROSA_RAMOS_ECOCIUDAD_PE = 'rosa.ramos@ecociudad.pe';
+
+    private const ADMINISTRACION_CONTRATOS_USUARIOS_ESTADO = 'administracion.contratos.usuarios.estado';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -69,11 +81,11 @@ class MaestrosYCuentasTest extends TestCase
 
         $this->actingAs($admin)
             ->put(route('administracion.contratos.maestros.cargos.update', $cargo), [
-                'nombre' => 'Supervisor general',
+                'nombre' => self::SUPERVISOR_GENERAL,
                 'descripcion' => 'Coordina cuadrillas.',
             ])
             ->assertSessionHasNoErrors();
-        $this->assertDatabaseHas('cargos', ['id' => $cargo->id, 'nombre' => 'Supervisor general']);
+        $this->assertDatabaseHas('cargos', ['id' => $cargo->id, 'nombre' => self::SUPERVISOR_GENERAL]);
 
         $this->actingAs($admin)
             ->patch(route('administracion.contratos.maestros.cargos.estado', $cargo), ['activo' => false])
@@ -104,15 +116,15 @@ class MaestrosYCuentasTest extends TestCase
         $sede = SedeTrabajo::where('nombre', 'Sede norte')->firstOrFail();
 
         $this->actingAs($admin)
-            ->put(route('administracion.contratos.maestros.sedes.update', $sede), ['nombre' => 'Sede sur'])
+            ->put(route('administracion.contratos.maestros.sedes.update', $sede), ['nombre' => self::SEDE_SUR])
             ->assertSessionHasNoErrors();
         $this->actingAs($admin)
             ->patch(route('administracion.contratos.maestros.sedes.estado', $sede), ['activo' => false])
             ->assertSessionHasNoErrors();
-        $this->assertDatabaseHas('sedes_trabajo', ['id' => $sede->id, 'nombre' => 'Sede sur', 'activo' => false]);
+        $this->assertDatabaseHas('sedes_trabajo', ['id' => $sede->id, 'nombre' => self::SEDE_SUR, 'activo' => false]);
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.maestros.sedes.store'), ['nombre' => 'Sede sur'])
+            ->post(route('administracion.contratos.maestros.sedes.store'), ['nombre' => self::SEDE_SUR])
             ->assertSessionHasErrors('nombre');
     }
 
@@ -132,7 +144,7 @@ class MaestrosYCuentasTest extends TestCase
 
         $this->actingAs($admin)
             ->put(route('administracion.contratos.maestros.roles.update', $rol), [
-                'nombre' => 'Supervisor general',
+                'nombre' => self::SUPERVISOR_GENERAL,
                 'codigo' => 'supervisor_general',
                 'modulos' => ['incidencias'],
             ])
@@ -151,11 +163,11 @@ class MaestrosYCuentasTest extends TestCase
         $this->assertSame('area_limpieza', $protegido->fresh()->codigo);
 
         $this->actingAs($admin)
-            ->patch(route('administracion.contratos.maestros.roles.estado', $protegido), ['activo' => false])
+            ->patch(route(self::ADMINISTRACION_CONTRATOS_MAESTROS_ROLES_ESTADO, $protegido), ['activo' => false])
             ->assertSessionHasErrors('rol');
 
         $this->actingAs($admin)
-            ->patch(route('administracion.contratos.maestros.roles.estado', $rol), ['activo' => false])
+            ->patch(route(self::ADMINISTRACION_CONTRATOS_MAESTROS_ROLES_ESTADO, $rol), ['activo' => false])
             ->assertSessionHasNoErrors();
         $this->assertFalse($rol->fresh()->activo);
     }
@@ -171,7 +183,7 @@ class MaestrosYCuentasTest extends TestCase
         User::factory()->create(['rol' => 'inspector', 'activo' => true]);
 
         $this->actingAs($admin)
-            ->patch(route('administracion.contratos.maestros.roles.estado', $rol), ['activo' => false])
+            ->patch(route(self::ADMINISTRACION_CONTRATOS_MAESTROS_ROLES_ESTADO, $rol), ['activo' => false])
             ->assertSessionHasErrors('rol');
 
         $this->assertTrue($rol->fresh()->activo);
@@ -234,19 +246,19 @@ class MaestrosYCuentasTest extends TestCase
         $camion->personal()->attach($operario->id, ['puesto' => 'recolector']);
 
         $this->actingAs($admin)
-            ->put(route('administracion.contratos.usuarios.update', $operario), [
-                'email' => 'rosa.ramos@ecociudad.pe',
+            ->put(route(self::ADMINISTRACION_CONTRATOS_USUARIOS_UPDATE, $operario), [
+                'email' => self::ROSA_RAMOS_ECOCIUDAD_PE,
                 'rol' => 'area_limpieza',
                 'password' => 'Nueva-Clave-2026',
                 'password_confirmation' => 'Nueva-Clave-2026',
             ])
             ->assertSessionHasNoErrors();
-        $this->assertSame('rosa.ramos@ecociudad.pe', $operario->fresh()->email);
+        $this->assertSame(self::ROSA_RAMOS_ECOCIUDAD_PE, $operario->fresh()->email);
         $this->assertSame(1, $operario->camiones()->count());
 
         $this->actingAs($admin)
-            ->put(route('administracion.contratos.usuarios.update', $operario), [
-                'email' => 'rosa.ramos@ecociudad.pe',
+            ->put(route(self::ADMINISTRACION_CONTRATOS_USUARIOS_UPDATE, $operario), [
+                'email' => self::ROSA_RAMOS_ECOCIUDAD_PE,
                 'rol' => 'personal_municipal',
             ])
             ->assertSessionHasNoErrors();
@@ -255,13 +267,13 @@ class MaestrosYCuentasTest extends TestCase
 
         $camion->personal()->attach($operario->id, ['puesto' => 'recolector']);
         $this->actingAs($admin)
-            ->patch(route('administracion.contratos.usuarios.estado', $operario), ['activo' => false])
+            ->patch(route(self::ADMINISTRACION_CONTRATOS_USUARIOS_ESTADO, $operario), ['activo' => false])
             ->assertSessionHasNoErrors();
         $this->assertFalse($operario->fresh()->activo);
         $this->assertSame(0, $operario->camiones()->count());
 
         $this->actingAs($admin)
-            ->patch(route('administracion.contratos.usuarios.estado', $operario), ['activo' => true])
+            ->patch(route(self::ADMINISTRACION_CONTRATOS_USUARIOS_ESTADO, $operario), ['activo' => true])
             ->assertSessionHas('success', 'Cuenta activada.');
         $this->assertTrue($operario->fresh()->activo);
     }
@@ -272,14 +284,14 @@ class MaestrosYCuentasTest extends TestCase
         $suelto = User::factory()->create(['rol' => 'ciudadano']);
 
         $this->actingAs($admin)
-            ->put(route('administracion.contratos.usuarios.update', $suelto), [
+            ->put(route(self::ADMINISTRACION_CONTRATOS_USUARIOS_UPDATE, $suelto), [
                 'email' => 'x@ecociudad.pe',
                 'rol' => 'area_limpieza',
             ])
             ->assertNotFound();
 
         $this->actingAs($admin)
-            ->patch(route('administracion.contratos.usuarios.estado', $suelto), ['activo' => false])
+            ->patch(route(self::ADMINISTRACION_CONTRATOS_USUARIOS_ESTADO, $suelto), ['activo' => false])
             ->assertNotFound();
     }
 

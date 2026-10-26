@@ -17,14 +17,24 @@ class FormValidationTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const ADMINISTRACION_VEHICULOS_STORE = 'administracion.vehiculos.store';
+
+    private const ABC_123 = 'ABC-123';
+
+    private const ADMINISTRACION_CONTRATOS_STORE = 'administracion.contratos.store';
+
+    private const REPORTES_STORE = 'reportes.store';
+
+    private const ADMINISTRACION_VEHICULOS_MAESTROS_TIPOS_STORE = 'administracion.vehiculos.maestros.tipos.store';
+
     public function test_vehicle_cannot_be_registered_with_only_plate_and_photo(): void
     {
         Storage::fake('public');
         $admin = User::factory()->create(['rol' => 'administrador']);
 
         $this->actingAs($admin)
-            ->post(route('administracion.vehiculos.store'), [
-                'placa' => 'ABC-123',
+            ->post(route(self::ADMINISTRACION_VEHICULOS_STORE), [
+                'placa' => self::ABC_123,
                 'estado' => 'Disponible',
                 'foto' => $this->imagenFalsa(),
             ])
@@ -39,18 +49,18 @@ class FormValidationTest extends TestCase
         $admin = User::factory()->create(['rol' => 'administrador']);
 
         $this->actingAs($admin)
-            ->post(route('administracion.vehiculos.store'), $this->payloadVehiculo([
+            ->post(route(self::ADMINISTRACION_VEHICULOS_STORE), $this->payloadVehiculo([
                 'placa' => 'PLACAINVALIDA',
             ]))
             ->assertSessionHasErrors('placa');
 
         $this->actingAs($admin)
-            ->post(route('administracion.vehiculos.store'), $this->payloadVehiculo())
+            ->post(route(self::ADMINISTRACION_VEHICULOS_STORE), $this->payloadVehiculo())
             ->assertSessionHasNoErrors();
 
         $this->actingAs($admin)
-            ->post(route('administracion.vehiculos.store'), $this->payloadVehiculo([
-                'placa' => 'ABC-123',
+            ->post(route(self::ADMINISTRACION_VEHICULOS_STORE), $this->payloadVehiculo([
+                'placa' => self::ABC_123,
             ]))
             ->assertSessionHasErrors('placa');
     }
@@ -61,14 +71,14 @@ class FormValidationTest extends TestCase
         $admin = User::factory()->create(['rol' => 'administrador']);
 
         $this->actingAs($admin)
-            ->post(route('administracion.vehiculos.store'), $this->payloadVehiculo())
+            ->post(route(self::ADMINISTRACION_VEHICULOS_STORE), $this->payloadVehiculo())
             ->assertSessionHasNoErrors();
 
-        $camion = Camion::where('placa', 'ABC-123')->firstOrFail();
+        $camion = Camion::where('placa', self::ABC_123)->firstOrFail();
 
         $this->actingAs($admin)
             ->post(route('administracion.vehiculos.update', $camion), [
-                'placa' => 'ABC-123',
+                'placa' => self::ABC_123,
                 'marca' => 'Volvo',
                 'modelo' => 'VM 270',
                 'anio' => 2023,
@@ -91,7 +101,7 @@ class FormValidationTest extends TestCase
         $area = AreaUnidad::where('nombre', 'Limpieza pública')->firstOrFail();
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), [
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), [
                 'documento' => 'ABC',
                 'nombres' => 'Luis',
                 'numero' => 'CON-INCOMPLETO',
@@ -115,11 +125,11 @@ class FormValidationTest extends TestCase
             ]);
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo->id, $area->id))
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo->id, $area->id))
             ->assertSessionHasNoErrors();
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo->id, $area->id, [
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo->id, $area->id, [
                 'numero' => 'CON-2026-DUP',
             ]))
             ->assertSessionHasErrors('fecha_inicio');
@@ -133,11 +143,11 @@ class FormValidationTest extends TestCase
         $ciudadano = User::factory()->create(['rol' => 'ciudadano']);
 
         $this->actingAs($ciudadano)
-            ->post(route('reportes.store'), [])
+            ->post(route(self::REPORTES_STORE), [])
             ->assertSessionHasErrors(['foto', 'latitud', 'longitud', 'descripcion', 'tipo_incidencia']);
 
         $this->actingAs($ciudadano)
-            ->post(route('reportes.store'), [
+            ->post(route(self::REPORTES_STORE), [
                 'foto' => $this->imagenFalsa(),
                 'latitud' => -12.068,
                 'longitud' => -75.210,
@@ -147,7 +157,7 @@ class FormValidationTest extends TestCase
             ->assertSessionHasErrors('tipo_incidencia');
 
         $this->actingAs($ciudadano)
-            ->post(route('reportes.store'), [
+            ->post(route(self::REPORTES_STORE), [
                 'foto' => $this->imagenFalsa(),
                 'latitud' => -12.068,
                 'longitud' => -75.210,
@@ -183,15 +193,15 @@ class FormValidationTest extends TestCase
             ->assertSessionHasErrors('modulos');
 
         $this->actingAs($admin)
-            ->post(route('administracion.vehiculos.maestros.tipos.store'), ['nombre' => ''])
+            ->post(route(self::ADMINISTRACION_VEHICULOS_MAESTROS_TIPOS_STORE), ['nombre' => ''])
             ->assertSessionHasErrors('nombre');
 
         $this->actingAs($admin)
-            ->post(route('administracion.vehiculos.maestros.tipos.store'), ['nombre' => 'Alineación de dirección'])
+            ->post(route(self::ADMINISTRACION_VEHICULOS_MAESTROS_TIPOS_STORE), ['nombre' => 'Alineación de dirección'])
             ->assertSessionHasNoErrors();
 
         $this->actingAs($admin)
-            ->post(route('administracion.vehiculos.maestros.tipos.store'), ['nombre' => 'Alineación de dirección'])
+            ->post(route(self::ADMINISTRACION_VEHICULOS_MAESTROS_TIPOS_STORE), ['nombre' => 'Alineación de dirección'])
             ->assertSessionHasErrors('nombre');
     }
 
@@ -202,7 +212,7 @@ class FormValidationTest extends TestCase
         $area = AreaUnidad::where('nombre', 'Limpieza pública')->firstOrFail();
 
         $this->actingAs($admin)
-            ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo->id, $area->id, [
+            ->post(route(self::ADMINISTRACION_CONTRATOS_STORE), $this->payloadContrato($cargo->id, $area->id, [
                 'documento' => '45556677',
                 'numero' => 'CON-CTA-001',
             ]))
@@ -275,8 +285,8 @@ class FormValidationTest extends TestCase
 
     public function test_unauthenticated_user_cannot_submit_protected_forms(): void
     {
-        $this->post(route('administracion.vehiculos.store'), [])->assertRedirect();
-        $this->post(route('reportes.store'), [])->assertRedirect();
+        $this->post(route(self::ADMINISTRACION_VEHICULOS_STORE), [])->assertRedirect();
+        $this->post(route(self::REPORTES_STORE), [])->assertRedirect();
     }
 
     /**
@@ -286,7 +296,7 @@ class FormValidationTest extends TestCase
     private function payloadVehiculo(array $overrides = []): array
     {
         return array_merge([
-            'placa' => 'ABC-123',
+            'placa' => self::ABC_123,
             'marca' => 'Mercedes-Benz',
             'modelo' => 'Atego',
             'anio' => 2022,

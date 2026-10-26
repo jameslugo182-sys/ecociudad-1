@@ -11,6 +11,8 @@ use Tests\TestCase;
 
 class TrazadoRutaCasosBordeTest extends TestCase
 {
+    private const HTTPS_ROUTER_PROJECT_OSRM_ORG_ROUTE = 'https://router.project-osrm.org/route/*';
+
     public function test_empty_stop_lists_only_return_the_depot(): void
     {
         $servicio = app(TrazadoRutaService::class);
@@ -33,7 +35,7 @@ class TrazadoRutaCasosBordeTest extends TestCase
                 'waypoints' => [['waypoint_index' => 1], ['waypoint_index' => 0]],
                 'trips' => [['distance' => 100, 'geometry' => ['coordinates' => []], 'legs' => []]],
             ], 200),
-            'https://router.project-osrm.org/route/*' => Http::response(['code' => 'Ok', 'routes' => []], 200),
+            self::HTTPS_ROUTER_PROJECT_OSRM_ORG_ROUTE => Http::response(['code' => 'Ok', 'routes' => []], 200),
         ]);
 
         $trazado = app(TrazadoRutaService::class)->trazar($this->reportes());
@@ -61,7 +63,7 @@ class TrazadoRutaCasosBordeTest extends TestCase
 
         Http::fake([
             'https://router.project-osrm.org/trip/*' => Http::response($respuestaTrip, 200),
-            'https://router.project-osrm.org/route/*' => Http::response([
+            self::HTTPS_ROUTER_PROJECT_OSRM_ORG_ROUTE => Http::response([
                 'code' => 'Ok',
                 'routes' => [['distance' => 10, 'geometry' => ['coordinates' => [[-75.22, -12.05]]], 'legs' => []]],
             ], 200),
@@ -76,7 +78,7 @@ class TrazadoRutaCasosBordeTest extends TestCase
     public function test_route_without_leg_distances_uses_haversine_between_stops(): void
     {
         Http::fake([
-            'https://router.project-osrm.org/route/*' => Http::response([
+            self::HTTPS_ROUTER_PROJECT_OSRM_ORG_ROUTE => Http::response([
                 'code' => 'Ok',
                 'routes' => [[
                     'distance' => 4200,

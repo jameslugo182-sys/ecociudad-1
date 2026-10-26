@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Reporte extends Model
 {
+    public const ESTADO_EN_ATENCION = 'En atención';
+
     protected $fillable = [
         'user_id',
         'tacho_id',

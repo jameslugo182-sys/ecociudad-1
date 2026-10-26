@@ -4,6 +4,8 @@ namespace App\Services;
 
 class HorarioSemanal
 {
+    private const TEXTO = '—';
+
     public const DIAS = [
         1 => 'Lunes',
         2 => 'Martes',
@@ -65,14 +67,14 @@ class HorarioSemanal
     public static function rango(?array $turno): string
     {
         if (! $turno) {
-            return '—';
+            return self::TEXTO;
         }
 
         $inicio = self::formatearHora($turno['inicio'] ?? null);
         $fin = self::formatearHora($turno['fin'] ?? null);
 
-        if ($inicio === '—' || $fin === '—') {
-            return '—';
+        if ($inicio === self::TEXTO || $fin === self::TEXTO) {
+            return self::TEXTO;
         }
 
         return "{$inicio} – {$fin}";
@@ -82,7 +84,7 @@ class HorarioSemanal
     {
         $hora = substr((string) $hora, 0, 5);
 
-        return preg_match('/^\d{2}:\d{2}$/', $hora) ? $hora : '—';
+        return preg_match('/^\d{2}:\d{2}$/', $hora) ? $hora : self::TEXTO;
     }
 
     /**

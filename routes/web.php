@@ -26,24 +26,34 @@ Route::get('/', function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::controller(ProfileController::class)
+        ->prefix('profile')
+        ->name('profile.')
+        ->group(function () {
+            Route::get('', 'edit')->name('edit');
+            Route::patch('', 'update')->name('update');
+            Route::delete('', 'destroy')->name('destroy');
+        });
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::middleware('role:ciudadano')->group(function () {
-        Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
-        Route::get('/reportes/crear', [ReporteController::class, 'create'])->name('reportes.create');
-        Route::post('/reportes', [ReporteController::class, 'store'])->name('reportes.store');
+        Route::controller(ReporteController::class)
+            ->prefix('reportes')
+            ->name('reportes.')
+            ->group(function () {
+                Route::get('', 'index')->name('index');
+                Route::get('crear', 'create')->name('create');
+                Route::post('', 'store')->name('store');
+            });
     });
 
     Route::prefix('administracion')
         ->name('administracion.')
         ->group(function () {
-            Route::get('/', DashboardController::class)
+            Route::get('', DashboardController::class)
                 ->middleware('role:administrador')
                 ->name('dashboard');
 
@@ -159,27 +169,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     ->name('vehiculos.equipo');
             });
 
-            Route::get('/rutas', [GestionRutasController::class, 'index'])
+            Route::controller(GestionRutasController::class)
                 ->middleware('module:rutas')
-                ->name('rutas.index');
-            Route::get('/rutas/horarios', [GestionRutasController::class, 'horarios'])
-                ->middleware('module:rutas')
-                ->name('rutas.horarios');
-            Route::get('/rutas/cronograma', [GestionRutasController::class, 'cronograma'])
-                ->middleware('module:rutas')
-                ->name('rutas.cronograma');
-            Route::post('/rutas', [GestionRutasController::class, 'store'])
-                ->middleware('module:rutas')
-                ->name('rutas.store');
-            Route::post('/rutas/proponer', [GestionRutasController::class, 'proponer'])
-                ->middleware('module:rutas')
-                ->name('rutas.proponer');
-            Route::patch('/rutas/{ruta}/horario', [GestionRutasController::class, 'actualizarHorario'])
-                ->middleware('module:rutas')
-                ->name('rutas.horario');
-            Route::patch('/rutas/{ruta}/cancelar', [GestionRutasController::class, 'cancelar'])
-                ->middleware('module:rutas')
-                ->name('rutas.cancelar');
+                ->prefix('rutas')
+                ->name('rutas.')
+                ->group(function () {
+                    Route::get('', 'index')->name('index');
+                    Route::get('horarios', 'horarios')->name('horarios');
+                    Route::get('cronograma', 'cronograma')->name('cronograma');
+                    Route::post('', 'store')->name('store');
+                    Route::post('proponer', 'proponer')->name('proponer');
+                    Route::patch('{ruta}/horario', 'actualizarHorario')->name('horario');
+                    Route::patch('{ruta}/cancelar', 'cancelar')->name('cancelar');
+                });
             Route::middleware('module:reportes')->group(function () {
                 Route::get('/reportes', [ReporteMetricasController::class, 'index'])->name('reportes.index');
                 Route::get('/reportes/incidencias', [ReporteMetricasController::class, 'incidencias'])
@@ -211,7 +213,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('admin.')
         ->middleware('role:personal_municipal')
         ->group(function () {
-            Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+            Route::get('', [AdminController::class, 'dashboard'])->name('dashboard');
             Route::get('/reportes', [AdminController::class, 'dashboard'])->name('reportes.index');
             Route::get('/mapa', [MapaController::class, 'index'])->name('mapa');
             Route::patch('/reportes/{reporte}/estado', [AdminController::class, 'actualizarEstado'])
@@ -220,15 +222,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('reportes.asignar');
             Route::post('/rutas/generar', [AdminController::class, 'generarRuta'])
                 ->name('rutas.generar');
-            Route::get('/rutas', [GestionRutasController::class, 'index'])->name('rutas.index');
-            Route::get('/rutas/horarios', [GestionRutasController::class, 'horarios'])->name('rutas.horarios');
-            Route::get('/rutas/cronograma', [GestionRutasController::class, 'cronograma'])->name('rutas.cronograma');
-            Route::post('/rutas', [GestionRutasController::class, 'store'])->name('rutas.store');
-            Route::post('/rutas/proponer', [GestionRutasController::class, 'proponer'])->name('rutas.proponer');
-            Route::patch('/rutas/{ruta}/horario', [GestionRutasController::class, 'actualizarHorario'])
-                ->name('rutas.horario');
-            Route::patch('/rutas/{ruta}/cancelar', [GestionRutasController::class, 'cancelar'])
-                ->name('rutas.cancelar');
+            Route::controller(GestionRutasController::class)
+                ->prefix('rutas')
+                ->name('rutas.')
+                ->group(function () {
+                    Route::get('', 'index')->name('index');
+                    Route::get('horarios', 'horarios')->name('horarios');
+                    Route::get('cronograma', 'cronograma')->name('cronograma');
+                    Route::post('', 'store')->name('store');
+                    Route::post('proponer', 'proponer')->name('proponer');
+                    Route::patch('{ruta}/horario', 'actualizarHorario')->name('horario');
+                    Route::patch('{ruta}/cancelar', 'cancelar')->name('cancelar');
+                });
             Route::get('/metricas', [ReporteMetricasController::class, 'index'])->name('metricas.index');
         });
 
@@ -236,7 +241,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('limpieza.')
         ->middleware('module:operaciones')
         ->group(function () {
-            Route::get('/', [LimpiezaController::class, 'dashboard'])->name('dashboard');
+            Route::get('', [LimpiezaController::class, 'dashboard'])->name('dashboard');
             Route::get('/rutas', [LimpiezaController::class, 'recorrido'])->name('rutas.index');
             Route::patch('/reportes/{reporte}/iniciar', [LimpiezaController::class, 'iniciar'])
                 ->name('reportes.iniciar');

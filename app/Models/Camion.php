@@ -69,21 +69,21 @@ class Camion extends Model
     public function enMantenimiento(): bool
     {
         return $this->estado === 'Mantenimiento'
-            || $this->mantenimientos()->where('estado', 'En curso')->exists();
+            || $this->mantenimientos()->where('estado', MantenimientoVehiculo::ESTADO_EN_CURSO)->exists();
     }
 
     public function scopeDisponiblesParaEquipo($query)
     {
         return $query
             ->where('estado', '!=', 'Mantenimiento')
-            ->whereDoesntHave('mantenimientos', fn ($subquery) => $subquery->where('estado', 'En curso'));
+            ->whereDoesntHave('mantenimientos', fn ($subquery) => $subquery->where('estado', MantenimientoVehiculo::ESTADO_EN_CURSO));
     }
 
     public function scopeDisponiblesParaMantenimiento($query)
     {
         return $query->whereDoesntHave(
             'mantenimientos',
-            fn ($subquery) => $subquery->where('estado', 'En curso')
+            fn ($subquery) => $subquery->where('estado', MantenimientoVehiculo::ESTADO_EN_CURSO)
         );
     }
 }

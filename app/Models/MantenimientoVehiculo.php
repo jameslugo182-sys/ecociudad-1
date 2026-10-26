@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MantenimientoVehiculo extends Model
 {
+    public const ESTADO_EN_CURSO = 'En curso';
+
     protected $table = 'mantenimientos_vehiculo';
 
     protected $fillable = [

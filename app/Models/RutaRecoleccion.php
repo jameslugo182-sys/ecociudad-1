@@ -11,7 +11,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class RutaRecoleccion extends Model
 {
-    public const ESTADOS_ACTIVAS = ['Planificada', 'En curso'];
+    public const ESTADO_EN_CURSO = 'En curso';
+
+    public const ESTADOS_ACTIVAS = ['Planificada', self::ESTADO_EN_CURSO];
 
     public const ETIQUETAS_DIAS = [
         1 => 'Lun',

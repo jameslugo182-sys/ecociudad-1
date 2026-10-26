@@ -15,6 +15,8 @@ class InformesOperativosTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const ADMINISTRACION_REPORTES_INDEX = 'administracion.reportes.index';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -33,7 +35,7 @@ class InformesOperativosTest extends TestCase
         ]);
 
         $paginas = [
-            'administracion.reportes.index' => 'Reportes/Metricas',
+            self::ADMINISTRACION_REPORTES_INDEX => 'Reportes/Metricas',
             'administracion.reportes.incidencias' => 'Reportes/InformeIncidencias',
             'administracion.reportes.rutas' => 'Reportes/InformeRutas',
             'administracion.reportes.tachos' => 'Reportes/InformeTachos',
@@ -64,7 +66,7 @@ class InformesOperativosTest extends TestCase
         $anterior->forceFill(['created_at' => now()->subMonths(2)])->save();
 
         $this->actingAs($administrador)
-            ->get(route('administracion.reportes.index', [
+            ->get(route(self::ADMINISTRACION_REPORTES_INDEX, [
                 'fecha_desde' => now()->startOfMonth()->toDateString(),
                 'fecha_hasta' => now()->toDateString(),
             ]))
@@ -170,7 +172,7 @@ class InformesOperativosTest extends TestCase
         $administrador = User::factory()->create(['rol' => 'administrador']);
 
         $this->actingAs($administrador)
-            ->get(route('administracion.reportes.index', [
+            ->get(route(self::ADMINISTRACION_REPORTES_INDEX, [
                 'fecha_desde' => now()->toDateString(),
                 'fecha_hasta' => now()->subDay()->toDateString(),
             ]))

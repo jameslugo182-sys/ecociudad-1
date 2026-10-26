@@ -22,6 +22,20 @@ class OperacionesFlotaTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const ABC_123 = 'ABC-123';
+
+    private const VEHICULOS_VIEJA_PNG = 'vehiculos/vieja.png';
+
+    private const ADMINISTRACION_VEHICULOS_EQUIPO = 'administracion.vehiculos.equipo';
+
+    private const ADMINISTRACION_TACHOS_UPDATE = 'administracion.tachos.update';
+
+    private const AAA_101 = 'AAA-101';
+
+    private const ADMINISTRACION_TACHOS_RUTA = 'administracion.tachos.ruta';
+
+    private const EVIDENCIAS_LIMPIEZA_ANTERIOR_PNG = 'evidencias_limpieza/anterior.png';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -37,7 +51,7 @@ class OperacionesFlotaTest extends TestCase
     public function test_vehicle_list_filters_and_suggests_the_next_code(): void
     {
         $admin = User::factory()->create(['rol' => 'administrador']);
-        $this->crearCamion('VH001', 'ABC-123');
+        $this->crearCamion('VH001', self::ABC_123);
         $this->crearCamion('VH002', 'XYZ-987', ['marca' => 'Scania', 'estado' => 'Inactivo']);
 
         $this->actingAs($admin)
@@ -54,14 +68,14 @@ class OperacionesFlotaTest extends TestCase
     {
         Storage::fake('public');
         $admin = User::factory()->create(['rol' => 'administrador']);
-        Storage::disk('public')->put('vehiculos/vieja.png', 'x');
-        $camion = $this->crearCamion('VH001', 'ABC-123', ['foto_path' => 'vehiculos/vieja.png']);
+        Storage::disk('public')->put(self::VEHICULOS_VIEJA_PNG, 'x');
+        $camion = $this->crearCamion('VH001', self::ABC_123, ['foto_path' => self::VEHICULOS_VIEJA_PNG]);
 
         $this->assertStringEndsWith('/storage/vehiculos/vieja.png', $camion->foto_url);
 
         $this->actingAs($admin)
             ->post(route('administracion.vehiculos.update', $camion), [
-                'placa' => 'ABC-123',
+                'placa' => self::ABC_123,
                 'marca' => 'Volvo',
                 'modelo' => 'FMX',
                 'anio' => 2023,
@@ -72,7 +86,7 @@ class OperacionesFlotaTest extends TestCase
             ->assertSessionHasNoErrors();
 
         $camion->refresh();
-        Storage::disk('public')->assertMissing('vehiculos/vieja.png');
+        Storage::disk('public')->assertMissing(self::VEHICULOS_VIEJA_PNG);
         Storage::disk('public')->assertExists($camion->foto_path);
         $this->assertSame('FMX', $camion->modelo);
 
@@ -89,25 +103,25 @@ class OperacionesFlotaTest extends TestCase
     {
         $admin = User::factory()->create(['rol' => 'administrador']);
         $personal = User::factory(8)->create(['rol' => 'area_limpieza']);
-        $primero = $this->crearCamion('VH001', 'ABC-123');
+        $primero = $this->crearCamion('VH001', self::ABC_123);
         $segundo = $this->crearCamion('VH002', 'ABC-124');
 
         $this->actingAs($admin)
-            ->put(route('administracion.vehiculos.equipo', $primero), [
+            ->put(route(self::ADMINISTRACION_VEHICULOS_EQUIPO, $primero), [
                 'conductor_id' => $personal[0]->id,
                 'recolector_ids' => [$personal[0]->id, $personal[1]->id, $personal[2]->id],
             ])
             ->assertSessionHasErrors('equipo');
 
         $this->actingAs($admin)
-            ->put(route('administracion.vehiculos.equipo', $primero), [
+            ->put(route(self::ADMINISTRACION_VEHICULOS_EQUIPO, $primero), [
                 'conductor_id' => $personal[0]->id,
                 'recolector_ids' => [$personal[1]->id, $personal[2]->id, $personal[3]->id],
             ])
             ->assertSessionHasNoErrors();
 
         $this->actingAs($admin)
-            ->put(route('administracion.vehiculos.equipo', $segundo), [
+            ->put(route(self::ADMINISTRACION_VEHICULOS_EQUIPO, $segundo), [
                 'conductor_id' => $personal[0]->id,
                 'recolector_ids' => [$personal[4]->id, $personal[5]->id, $personal[6]->id],
             ])
@@ -121,7 +135,7 @@ class OperacionesFlotaTest extends TestCase
     {
         $admin = User::factory()->create(['rol' => 'administrador']);
         $tipo = TipoMantenimiento::create(['nombre' => 'Revisión general', 'activo' => true]);
-        $camion = $this->crearCamion('VH001', 'ABC-123', ['estado' => 'Mantenimiento']);
+        $camion = $this->crearCamion('VH001', self::ABC_123, ['estado' => 'Mantenimiento']);
 
         $this->actingAs($admin)
             ->post(route('administracion.vehiculos.mantenimiento.store'), [
@@ -180,17 +194,17 @@ class OperacionesFlotaTest extends TestCase
         ];
 
         $this->actingAs($admin)
-            ->put(route('administracion.tachos.update', $tacho), $datos)
+            ->put(route(self::ADMINISTRACION_TACHOS_UPDATE, $tacho), $datos)
             ->assertSessionHasNoErrors();
         $this->assertTrue($tacho->fresh()->activo);
 
         $this->actingAs($admin)
-            ->put(route('administracion.tachos.update', $tacho), $datos + ['activo' => false])
+            ->put(route(self::ADMINISTRACION_TACHOS_UPDATE, $tacho), $datos + ['activo' => false])
             ->assertSessionHasNoErrors();
         $this->assertSame(Tacho::ESTADO_INACTIVO, $tacho->fresh()->estado);
 
         $this->actingAs($admin)
-            ->put(route('administracion.tachos.update', $tacho), $datos + ['activo' => true])
+            ->put(route(self::ADMINISTRACION_TACHOS_UPDATE, $tacho), $datos + ['activo' => true])
             ->assertSessionHasNoErrors();
         $this->assertSame(Tacho::ESTADO_OPERATIVO, $tacho->fresh()->estado);
 
@@ -203,7 +217,7 @@ class OperacionesFlotaTest extends TestCase
     {
         $admin = User::factory()->create(['rol' => 'administrador']);
         $ciudadano = User::factory()->create(['rol' => 'ciudadano']);
-        $primerCamion = $this->camionConEquipo('VH101', 'AAA-101');
+        $primerCamion = $this->camionConEquipo('VH101', self::AAA_101);
         $segundoCamion = $this->camionConEquipo('VH102', 'AAA-102');
 
         foreach ([$primerCamion, $segundoCamion] as $indice => $camion) {
@@ -225,15 +239,15 @@ class OperacionesFlotaTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->post(route('administracion.tachos.ruta', $tacho), ['ruta_id' => $primera->id])
+            ->post(route(self::ADMINISTRACION_TACHOS_RUTA, $tacho), ['ruta_id' => $primera->id])
             ->assertSessionHasNoErrors();
 
         $this->actingAs($admin)
-            ->post(route('administracion.tachos.ruta', $tacho), ['ruta_id' => $primera->id])
+            ->post(route(self::ADMINISTRACION_TACHOS_RUTA, $tacho), ['ruta_id' => $primera->id])
             ->assertSessionHasErrors(['ruta_id' => 'Este tacho ya está en esa ruta.']);
 
         $this->actingAs($admin)
-            ->post(route('administracion.tachos.ruta', $tacho), ['ruta_id' => $segunda->id])
+            ->post(route(self::ADMINISTRACION_TACHOS_RUTA, $tacho), ['ruta_id' => $segunda->id])
             ->assertSessionHasErrors(['ruta_id' => 'El tacho ya está asignado a otra ruta activa.']);
 
         $this->actingAs($admin)
@@ -247,7 +261,7 @@ class OperacionesFlotaTest extends TestCase
     {
         $admin = User::factory()->create(['rol' => 'administrador']);
         $ciudadano = User::factory()->create(['rol' => 'ciudadano']);
-        $camion = $this->camionConEquipo('VH101', 'AAA-101');
+        $camion = $this->camionConEquipo('VH101', self::AAA_101);
         $reporte = $this->crearReporte($ciudadano);
         $ruta = RutaRecoleccion::create([
             'camion_id' => $camion->id,
@@ -296,7 +310,7 @@ class OperacionesFlotaTest extends TestCase
 
         $admin = User::factory()->create(['rol' => 'administrador']);
         $ciudadano = User::factory()->create(['rol' => 'ciudadano']);
-        $camion = $this->camionConEquipo('VH101', 'AAA-101');
+        $camion = $this->camionConEquipo('VH101', self::AAA_101);
         $conductor = $camion->personal->firstWhere('pivot.puesto', 'conductor');
         $primero = $this->crearReporte($ciudadano);
         $segundo = $this->crearReporte($ciudadano, ['latitud' => -12.07]);
@@ -334,14 +348,14 @@ class OperacionesFlotaTest extends TestCase
         $this->assertSame('En curso', $ruta->fresh()->estado);
         $this->assertNull($ruta->fresh()->finalizada_at);
 
-        Storage::disk('public')->put('evidencias_limpieza/anterior.png', 'x');
-        $segundo->update(['evidencia_path' => 'evidencias_limpieza/anterior.png']);
+        Storage::disk('public')->put(self::EVIDENCIAS_LIMPIEZA_ANTERIOR_PNG, 'x');
+        $segundo->update(['evidencia_path' => self::EVIDENCIAS_LIMPIEZA_ANTERIOR_PNG]);
 
         $this->actingAs($conductor)
             ->post(route('limpieza.reportes.evidencia', $segundo), ['evidencia' => $this->imagenFalsa()])
             ->assertSessionHasNoErrors();
 
-        Storage::disk('public')->assertMissing('evidencias_limpieza/anterior.png');
+        Storage::disk('public')->assertMissing(self::EVIDENCIAS_LIMPIEZA_ANTERIOR_PNG);
         $this->assertSame('Finalizada', $ruta->fresh()->estado);
         $this->assertNotNull($ruta->fresh()->finalizada_at);
         $this->assertNotNull($segundo->fresh()->evidencia_url);

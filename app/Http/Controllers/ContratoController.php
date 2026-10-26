@@ -20,6 +20,10 @@ use Inertia\Response as InertiaResponse;
 
 class ContratoController extends Controller
 {
+    private const MAX_120 = 'max:120';
+
+    private const MAX_80 = 'max:80';
+
     private const TIPOS = ['CAS', 'Locación de servicios', 'Plazo fijo', 'Indeterminado', 'Prácticas'];
 
     private const ESTADOS = ['Vigente', 'Suspendido', 'Finalizado', 'Cancelado'];
@@ -172,25 +176,25 @@ class ContratoController extends Controller
                     ? []
                     : [Rule::unique('colaboradores', 'documento')->ignore($contrato->colaborador_id)]),
             ],
-            'nombres' => ['required', 'string', 'max:120'],
-            'apellido_paterno' => ['required', 'string', 'max:80'],
-            'apellido_materno' => ['required', 'string', 'max:80'],
+            'nombres' => ['required', 'string', self::MAX_120],
+            'apellido_paterno' => ['required', 'string', self::MAX_80],
+            'apellido_materno' => ['required', 'string', self::MAX_80],
             'sexo' => ['required', Rule::in(self::SEXOS)],
             'estado_civil' => ['nullable', Rule::in(self::ESTADOS_CIVILES)],
-            'nacionalidad' => ['required', 'string', 'max:80'],
+            'nacionalidad' => ['required', 'string', self::MAX_80],
             'fecha_nacimiento' => ['nullable', 'date', 'before:today'],
             'telefono' => ['required', 'string', 'max:20', 'regex:/^[0-9+\s\-]{6,20}$/'],
             'email_personal' => ['nullable', 'email', 'max:255'],
             'direccion' => ['required', 'string', 'max:255'],
-            'departamento' => ['nullable', 'string', 'max:80'],
-            'provincia' => ['nullable', 'string', 'max:80'],
-            'distrito' => ['nullable', 'string', 'max:80'],
-            'contacto_emergencia' => ['nullable', 'string', 'max:120'],
+            'departamento' => ['nullable', 'string', self::MAX_80],
+            'provincia' => ['nullable', 'string', self::MAX_80],
+            'distrito' => ['nullable', 'string', self::MAX_80],
+            'contacto_emergencia' => ['nullable', 'string', self::MAX_120],
             'telefono_emergencia' => ['nullable', 'string', 'max:20'],
             'nivel_educativo' => ['nullable', Rule::in(self::NIVELES_EDUCATIVOS)],
             'institucion_estudios' => ['nullable', 'string', 'max:160'],
             'especialidad' => ['nullable', 'string', 'max:160'],
-            'grado_titulo' => ['nullable', 'string', 'max:120'],
+            'grado_titulo' => ['nullable', 'string', self::MAX_120],
             'anio_egreso' => ['nullable', 'integer', 'min:1950', 'max:'.(now()->year + 1)],
             'numero' => [
                 'required',

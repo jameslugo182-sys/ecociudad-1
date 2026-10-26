@@ -22,6 +22,24 @@ class AdministrationTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const LIMPIEZA_PUBLICA = 'Limpieza pública';
+
+    private const PASSWORD_2026 = 'Password-2026';
+
+    private const V_07_00 = '07:00';
+
+    private const V_13_00 = '13:00';
+
+    private const ADMINISTRACION_VEHICULOS_EQUIPOS = 'administracion.vehiculos.equipos';
+
+    private const ADMINISTRACION_EQUIPOS = 'Administracion/Equipos';
+
+    private const REPORTES_FOTOS_TEST_JPG = 'reportes_fotos/test.jpg';
+
+    private const ADMINISTRACION_RUTAS_STORE = 'administracion.rutas.store';
+
+    private const LUN_MIE_VIE_07_00_11_30 = 'Lun, Mié, Vie · 07:00–11:30';
+
     public function test_only_administrator_can_access_administration_module(): void
     {
         $administrador = User::factory()->create(['rol' => 'administrador']);
@@ -50,7 +68,7 @@ class AdministrationTest extends TestCase
     {
         $administrador = User::factory()->create(['rol' => 'administrador']);
         $cargo = Cargo::where('nombre', 'Recolector')->firstOrFail();
-        $area = AreaUnidad::where('nombre', 'Limpieza pública')->firstOrFail();
+        $area = AreaUnidad::where('nombre', self::LIMPIEZA_PUBLICA)->firstOrFail();
 
         $this->actingAs($administrador)
             ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo->id, $area->id))
@@ -64,8 +82,8 @@ class AdministrationTest extends TestCase
                 'colaborador_id' => $colaborador->id,
                 'email' => 'operario@ecociudad.pe',
                 'rol' => 'area_limpieza',
-                'password' => 'Password-2026',
-                'password_confirmation' => 'Password-2026',
+                'password' => self::PASSWORD_2026,
+                'password_confirmation' => self::PASSWORD_2026,
             ])
             ->assertRedirect()
             ->assertSessionHasNoErrors();
@@ -85,7 +103,7 @@ class AdministrationTest extends TestCase
 
         $this->assertDatabaseHas('contratos', [
             'numero' => 'CON-2026-001',
-            'area' => 'Limpieza pública',
+            'area' => self::LIMPIEZA_PUBLICA,
             'area_id' => $area->id,
         ]);
     }
@@ -94,7 +112,7 @@ class AdministrationTest extends TestCase
     {
         $administrador = User::factory()->create(['rol' => 'administrador']);
         $cargo = Cargo::where('nombre', 'Recolector')->firstOrFail();
-        $area = AreaUnidad::where('nombre', 'Limpieza pública')->firstOrFail();
+        $area = AreaUnidad::where('nombre', self::LIMPIEZA_PUBLICA)->firstOrFail();
 
         $response = $this->actingAs($administrador)
             ->post(route('administracion.contratos.formato'), $this->payloadContrato($cargo->id, $area->id, [
@@ -118,7 +136,7 @@ class AdministrationTest extends TestCase
     {
         $administrador = User::factory()->create(['rol' => 'administrador']);
         $cargo = Cargo::where('nombre', 'Recolector')->firstOrFail();
-        $area = AreaUnidad::where('nombre', 'Limpieza pública')->firstOrFail();
+        $area = AreaUnidad::where('nombre', self::LIMPIEZA_PUBLICA)->firstOrFail();
 
         $this->actingAs($administrador)
             ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo->id, $area->id, [
@@ -131,13 +149,13 @@ class AdministrationTest extends TestCase
             ->assertSessionHasNoErrors();
 
         $turnos = [
-            ['clave' => 'manana', 'nombre' => 'Turno mañana', 'inicio' => '07:00', 'fin' => '13:00'],
+            ['clave' => 'manana', 'nombre' => 'Turno mañana', 'inicio' => self::V_07_00, 'fin' => self::V_13_00],
             ['clave' => 'tarde', 'nombre' => 'Turno tarde', 'inicio' => '14:00', 'fin' => '18:00'],
             ['clave' => 'noche', 'nombre' => 'Turno noche', 'inicio' => '19:00', 'fin' => '23:00'],
         ];
         $dias = [
             1 => [
-                'manana' => ['inicio' => '07:00', 'fin' => '13:00'],
+                'manana' => ['inicio' => self::V_07_00, 'fin' => self::V_13_00],
                 'tarde' => ['inicio' => '14:00', 'fin' => '18:00'],
                 'noche' => ['inicio' => '19:00', 'fin' => '23:00'],
             ],
@@ -156,13 +174,13 @@ class AdministrationTest extends TestCase
             ->post(route('administracion.contratos.horarios.plantillas.store'), [
                 'nombre' => 'Solo mañana',
                 'turnos' => [
-                    ['clave' => 'manana', 'nombre' => 'Turno mañana', 'inicio' => '07:00', 'fin' => '13:00'],
+                    ['clave' => 'manana', 'nombre' => 'Turno mañana', 'inicio' => self::V_07_00, 'fin' => self::V_13_00],
                     ['clave' => 'tarde', 'nombre' => 'Turno tarde', 'inicio' => '', 'fin' => ''],
                     ['clave' => 'noche', 'nombre' => 'Turno noche', 'inicio' => '', 'fin' => ''],
                 ],
                 'dias' => [
                     1 => [
-                        'manana' => ['inicio' => '07:00', 'fin' => '13:00'],
+                        'manana' => ['inicio' => self::V_07_00, 'fin' => self::V_13_00],
                     ],
                 ],
             ])
@@ -239,9 +257,9 @@ class AdministrationTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page->component('Administracion/Camiones'));
 
         $this->actingAs($administrador)
-            ->get(route('administracion.vehiculos.equipos'))
+            ->get(route(self::ADMINISTRACION_VEHICULOS_EQUIPOS))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->component('Administracion/Equipos'));
+            ->assertInertia(fn (Assert $page) => $page->component(self::ADMINISTRACION_EQUIPOS));
 
         $this->actingAs($administrador)
             ->put(route('administracion.vehiculos.equipo', $camion), [
@@ -299,10 +317,10 @@ class AdministrationTest extends TestCase
         $this->assertSame('En curso', $mantenimiento->estado);
 
         $this->actingAs($administrador)
-            ->get(route('administracion.vehiculos.equipos'))
+            ->get(route(self::ADMINISTRACION_VEHICULOS_EQUIPOS))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Administracion/Equipos')
+                ->component(self::ADMINISTRACION_EQUIPOS)
                 ->has('camiones', 0));
 
         $this->actingAs($administrador)
@@ -339,10 +357,10 @@ class AdministrationTest extends TestCase
         ]);
 
         $this->actingAs($administrador)
-            ->get(route('administracion.vehiculos.equipos'))
+            ->get(route(self::ADMINISTRACION_VEHICULOS_EQUIPOS))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Administracion/Equipos')
+                ->component(self::ADMINISTRACION_EQUIPOS)
                 ->has('camiones', 1)
                 ->where('camiones.0.id', $camion->id));
 
@@ -369,8 +387,8 @@ class AdministrationTest extends TestCase
                 'colaborador_id' => $colaborador->id,
                 'email' => 'sincontrato@ecociudad.pe',
                 'rol' => 'area_limpieza',
-                'password' => 'Password-2026',
-                'password_confirmation' => 'Password-2026',
+                'password' => self::PASSWORD_2026,
+                'password_confirmation' => self::PASSWORD_2026,
             ])
             ->assertSessionHasErrors('colaborador_id');
 
@@ -400,7 +418,7 @@ class AdministrationTest extends TestCase
             [-12.06, -75.23],
         ])->map(fn (array $coordenada, int $indice) => Reporte::create([
             'user_id' => $ciudadano->id,
-            'foto_path' => 'reportes_fotos/test.jpg',
+            'foto_path' => self::REPORTES_FOTOS_TEST_JPG,
             'latitud' => $coordenada[0],
             'longitud' => $coordenada[1],
             'descripcion' => "Incidencia para ruta {$indice}",
@@ -408,7 +426,7 @@ class AdministrationTest extends TestCase
         ]));
 
         $this->actingAs($administrador)
-            ->post(route('administracion.rutas.store'), [
+            ->post(route(self::ADMINISTRACION_RUTAS_STORE), [
                 'camion_id' => $camion->id,
                 'fecha' => today()->toDateString(),
                 'reporte_ids' => $reportes->pluck('id')->all(),
@@ -483,7 +501,7 @@ class AdministrationTest extends TestCase
             [-12.0710, -75.1990],
         ])->map(fn (array $coordenada, int $indice) => Reporte::create([
             'user_id' => $ciudadano->id,
-            'foto_path' => 'reportes_fotos/test.jpg',
+            'foto_path' => self::REPORTES_FOTOS_TEST_JPG,
             'latitud' => $coordenada[0],
             'longitud' => $coordenada[1],
             'descripcion' => "Incidencia flota {$indice}",
@@ -503,7 +521,7 @@ class AdministrationTest extends TestCase
 
         $primera = $propuestas[0];
         $this->actingAs($administrador)
-            ->post(route('administracion.rutas.store'), [
+            ->post(route(self::ADMINISTRACION_RUTAS_STORE), [
                 'camion_id' => $camionUno->id,
                 'fecha' => today()->toDateString(),
                 'reporte_ids' => $primera['reporte_ids'],
@@ -547,7 +565,7 @@ class AdministrationTest extends TestCase
             [-12.06, -75.23],
         ])->map(fn (array $coordenada, int $indice) => Reporte::create([
             'user_id' => $ciudadano->id,
-            'foto_path' => 'reportes_fotos/test.jpg',
+            'foto_path' => self::REPORTES_FOTOS_TEST_JPG,
             'latitud' => $coordenada[0],
             'longitud' => $coordenada[1],
             'descripcion' => "Incidencia para horario {$indice}",
@@ -555,7 +573,7 @@ class AdministrationTest extends TestCase
         ]));
 
         $this->actingAs($administrador)
-            ->post(route('administracion.rutas.store'), [
+            ->post(route(self::ADMINISTRACION_RUTAS_STORE), [
                 'camion_id' => $camion->id,
                 'fecha' => today()->toDateString(),
                 'reporte_ids' => $reportes->pluck('id')->all(),
@@ -583,7 +601,7 @@ class AdministrationTest extends TestCase
 
         $this->actingAs($administrador)
             ->patch(route('administracion.rutas.horario', $ruta), [
-                'hora_inicio' => '07:00',
+                'hora_inicio' => self::V_07_00,
                 'hora_fin' => '11:30',
                 'dias_recoleccion' => [1, 3, 5],
                 'horario_nota' => 'Salida desde la base municipal',
@@ -592,10 +610,10 @@ class AdministrationTest extends TestCase
             ->assertSessionHasNoErrors();
 
         $ruta->refresh();
-        $this->assertSame('07:00', $ruta->hora_inicio);
+        $this->assertSame(self::V_07_00, $ruta->hora_inicio);
         $this->assertSame('11:30', $ruta->hora_fin);
         $this->assertSame([1, 3, 5], $ruta->dias_recoleccion);
-        $this->assertSame('Lun, Mié, Vie · 07:00–11:30', $ruta->horario_resumen);
+        $this->assertSame(self::LUN_MIE_VIE_07_00_11_30, $ruta->horario_resumen);
 
         $this->actingAs($administrador)
             ->get(route('administracion.rutas.cronograma'))
@@ -604,7 +622,7 @@ class AdministrationTest extends TestCase
                 ->component('Rutas/Cronograma')
                 ->has('rutas', 1)
                 ->where('rutas.0.id', $ruta->id)
-                ->where('rutas.0.horario_resumen', 'Lun, Mié, Vie · 07:00–11:30')
+                ->where('rutas.0.horario_resumen', self::LUN_MIE_VIE_07_00_11_30)
                 ->has('mes'));
 
         $this->actingAs($personal[1])
@@ -612,7 +630,7 @@ class AdministrationTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Limpieza/Recorrido')
-                ->where('rutaAsignada.horario_resumen', 'Lun, Mié, Vie · 07:00–11:30')
+                ->where('rutaAsignada.horario_resumen', self::LUN_MIE_VIE_07_00_11_30)
                 ->where('rutaAsignada.horario_nota', 'Salida desde la base municipal'));
 
         $this->actingAs($administrador)

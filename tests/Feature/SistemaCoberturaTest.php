@@ -19,7 +19,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia as Assert;
 use ReflectionClass;
@@ -29,6 +28,8 @@ use Tests\TestCase;
 class SistemaCoberturaTest extends TestCase
 {
     use RefreshDatabase;
+
+    private const IOT_TACHOS_LECTURAS = 'iot.tachos.lecturas';
 
     protected function setUp(): void
     {
@@ -47,12 +48,12 @@ class SistemaCoberturaTest extends TestCase
         $token = $tacho->generarToken();
         $tacho->save();
 
-        $this->postJson(route('iot.tachos.lecturas', $tacho), ['porcentaje' => 30], ['X-Device-Token' => $token])
+        $this->postJson(route(self::IOT_TACHOS_LECTURAS, $tacho), ['porcentaje' => 30], ['X-Device-Token' => $token])
             ->assertOk()
             ->assertJsonPath('nivel_porcentaje', 30)
             ->assertJsonPath('alerta', false);
 
-        $this->postJson(route('iot.tachos.lecturas', $tacho), ['porcentaje' => 30])
+        $this->postJson(route(self::IOT_TACHOS_LECTURAS, $tacho), ['porcentaje' => 30])
             ->assertUnauthorized();
     }
 
@@ -62,7 +63,7 @@ class SistemaCoberturaTest extends TestCase
         $token = $tacho->generarToken();
         $tacho->save();
 
-        $this->postJson(route('iot.tachos.lecturas', $tacho), ['porcentaje' => 30], ['X-Device-Token' => $token])
+        $this->postJson(route(self::IOT_TACHOS_LECTURAS, $tacho), ['porcentaje' => 30], ['X-Device-Token' => $token])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('tacho');
     }
@@ -215,14 +216,8 @@ class SistemaCoberturaTest extends TestCase
             ->post(route('verification.send'))
             ->assertRedirect(route('dashboard', absolute: false));
 
-        $url = URL::temporarySignedRoute(
-            'verification.verify',
-            now()->addMinutes(60),
-            ['id' => $usuario->id, 'hash' => sha1($usuario->email)]
-        );
-
         $this->actingAs($usuario)
-            ->get($url)
+            ->get($this->urlVerificacion($usuario))
             ->assertRedirect(route('dashboard', absolute: false).'?verified=1');
     }
 

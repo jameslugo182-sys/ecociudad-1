@@ -2,7 +2,10 @@
 
 namespace Tests;
 
+use App\Models\User;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\URL;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -32,5 +35,26 @@ abstract class TestCase extends BaseTestCase
             'area_id' => $areaId,
             'estado' => 'Vigente',
         ], $overrides);
+    }
+
+    /**
+     * URL firmada de verificación de correo, obtenida del propio mensaje de Laravel
+     * (así las pruebas no calculan hashes por su cuenta).
+     */
+    protected function urlVerificacion(User $usuario): string
+    {
+        return (new VerifyEmail)->toMail($usuario)->actionUrl;
+    }
+
+    /**
+     * URL firmada válida pero con un hash que no corresponde al correo del usuario.
+     */
+    protected function urlVerificacionConHashInvalido(User $usuario): string
+    {
+        return URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            ['id' => $usuario->id, 'hash' => 'hash-que-no-corresponde']
+        );
     }
 }

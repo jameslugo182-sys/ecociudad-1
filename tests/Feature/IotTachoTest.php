@@ -18,6 +18,14 @@ class IotTachoTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const ADMINISTRACION_TACHOS_INDEX = 'administracion.tachos.index';
+
+    private const ADMINISTRACION_TACHOS_STORE = 'administracion.tachos.store';
+
+    private const IOT_TACHOS_LECTURAS = 'iot.tachos.lecturas';
+
+    private const BEARER = 'Bearer ';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -30,7 +38,7 @@ class IotTachoTest extends TestCase
         $administrador = User::factory()->create(['rol' => 'administrador']);
 
         $this->actingAs($administrador)
-            ->get(route('administracion.tachos.index'))
+            ->get(route(self::ADMINISTRACION_TACHOS_INDEX))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Tachos/Index')
@@ -38,9 +46,9 @@ class IotTachoTest extends TestCase
                 ->where('siguienteCodigo', 'TCH001'));
 
         $this->actingAs($administrador)
-            ->from(route('administracion.tachos.index'))
-            ->post(route('administracion.tachos.store'), $this->payloadTacho())
-            ->assertRedirect(route('administracion.tachos.index'))
+            ->from(route(self::ADMINISTRACION_TACHOS_INDEX))
+            ->post(route(self::ADMINISTRACION_TACHOS_STORE), $this->payloadTacho())
+            ->assertRedirect(route(self::ADMINISTRACION_TACHOS_INDEX))
             ->assertSessionHasNoErrors()
             ->assertSessionHas('device_token')
             ->assertSessionHas('registered', true);
@@ -61,14 +69,14 @@ class IotTachoTest extends TestCase
         $administrador = User::factory()->create(['rol' => 'administrador']);
 
         $this->actingAs($administrador)
-            ->from(route('administracion.tachos.index'))
-            ->post(route('administracion.tachos.store'), [
+            ->from(route(self::ADMINISTRACION_TACHOS_INDEX))
+            ->post(route(self::ADMINISTRACION_TACHOS_STORE), [
                 'nombre' => 'Ab',
                 'distancia_vacio_cm' => 8,
                 'distancia_lleno_cm' => 80,
                 'umbral_alerta' => 80,
             ])
-            ->assertRedirect(route('administracion.tachos.index'))
+            ->assertRedirect(route(self::ADMINISTRACION_TACHOS_INDEX))
             ->assertSessionHasErrors(['nombre', 'latitud', 'longitud', 'distancia_lleno_cm']);
     }
 
@@ -78,11 +86,11 @@ class IotTachoTest extends TestCase
         $municipal = User::factory()->create(['rol' => 'personal_municipal']);
 
         $this->actingAs($ciudadano)
-            ->get(route('administracion.tachos.index'))
+            ->get(route(self::ADMINISTRACION_TACHOS_INDEX))
             ->assertForbidden();
 
         $this->actingAs($municipal)
-            ->get(route('administracion.tachos.index'))
+            ->get(route(self::ADMINISTRACION_TACHOS_INDEX))
             ->assertForbidden();
     }
 
@@ -94,10 +102,10 @@ class IotTachoTest extends TestCase
         $token = $this->registrarTacho($administrador);
         $tacho = Tacho::query()->firstOrFail();
 
-        $this->postJson(route('iot.tachos.lecturas', $tacho), [
+        $this->postJson(route(self::IOT_TACHOS_LECTURAS, $tacho), [
             'distancia_cm' => 10,
         ], [
-            'Authorization' => 'Bearer '.$token,
+            'Authorization' => self::BEARER.$token,
         ])
             ->assertOk()
             ->assertJsonPath('ok', true)
@@ -127,7 +135,7 @@ class IotTachoTest extends TestCase
         $this->registrarTacho($administrador);
         $tacho = Tacho::query()->firstOrFail();
 
-        $this->postJson(route('iot.tachos.lecturas', $tacho), [
+        $this->postJson(route(self::IOT_TACHOS_LECTURAS, $tacho), [
             'distancia_cm' => 40,
         ], [
             'Authorization' => 'Bearer token-falso',
@@ -146,24 +154,24 @@ class IotTachoTest extends TestCase
         $token = $this->registrarTacho($administrador, ['umbral_alerta' => 80]);
         $tacho = Tacho::query()->firstOrFail();
 
-        $this->postJson(route('iot.tachos.lecturas', $tacho), [
+        $this->postJson(route(self::IOT_TACHOS_LECTURAS, $tacho), [
             'distancia_cm' => 20,
-        ], ['Authorization' => 'Bearer '.$token])->assertOk();
+        ], ['Authorization' => self::BEARER.$token])->assertOk();
 
         Notification::assertSentTimes(TachoNivelAlerta::class, 1);
         $this->assertDatabaseCount('reportes', 1);
 
-        $this->postJson(route('iot.tachos.lecturas', $tacho), [
+        $this->postJson(route(self::IOT_TACHOS_LECTURAS, $tacho), [
             'distancia_cm' => 22,
-        ], ['Authorization' => 'Bearer '.$token])->assertOk();
+        ], ['Authorization' => self::BEARER.$token])->assertOk();
 
         Notification::assertSentTimes(TachoNivelAlerta::class, 1);
         $this->assertDatabaseCount('reportes', 1);
         $this->assertTrue($tacho->fresh()->alerta_activa);
 
-        $this->postJson(route('iot.tachos.lecturas', $tacho), [
+        $this->postJson(route(self::IOT_TACHOS_LECTURAS, $tacho), [
             'distancia_cm' => 50,
-        ], ['Authorization' => 'Bearer '.$token])->assertOk();
+        ], ['Authorization' => self::BEARER.$token])->assertOk();
 
         $liberado = $tacho->fresh();
         $this->assertFalse($liberado->alerta_activa);
@@ -210,16 +218,16 @@ class IotTachoTest extends TestCase
         $token = $this->registrarTacho($administrador);
         $tacho = Tacho::query()->firstOrFail();
 
-        $this->postJson(route('iot.tachos.lecturas', $tacho), [
+        $this->postJson(route(self::IOT_TACHOS_LECTURAS, $tacho), [
             'distancia_cm' => 8,
-        ], ['Authorization' => 'Bearer '.$token])->assertOk();
+        ], ['Authorization' => self::BEARER.$token])->assertOk();
 
         $this->actingAs($administrador)
-            ->from(route('administracion.tachos.index'))
+            ->from(route(self::ADMINISTRACION_TACHOS_INDEX))
             ->post(route('administracion.tachos.ruta', $tacho), [
                 'ruta_id' => $ruta->id,
             ])
-            ->assertRedirect(route('administracion.tachos.index'))
+            ->assertRedirect(route(self::ADMINISTRACION_TACHOS_INDEX))
             ->assertSessionHasNoErrors();
 
         $this->assertSame(2, $ruta->fresh()->reportes()->count());
@@ -266,8 +274,8 @@ class IotTachoTest extends TestCase
     private function registrarTacho(User $administrador, array $overrides = []): string
     {
         $this->actingAs($administrador)
-            ->from(route('administracion.tachos.index'))
-            ->post(route('administracion.tachos.store'), $this->payloadTacho($overrides))
+            ->from(route(self::ADMINISTRACION_TACHOS_INDEX))
+            ->post(route(self::ADMINISTRACION_TACHOS_STORE), $this->payloadTacho($overrides))
             ->assertSessionHasNoErrors();
 
         return session('device_token');
