@@ -180,9 +180,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('/rutas/{ruta}/cancelar', [GestionRutasController::class, 'cancelar'])
                 ->middleware('module:rutas')
                 ->name('rutas.cancelar');
-            Route::get('/reportes', [ReporteMetricasController::class, 'index'])
-                ->middleware('module:reportes')
-                ->name('reportes.index');
+            Route::middleware('module:reportes')->group(function () {
+                Route::get('/reportes', [ReporteMetricasController::class, 'index'])->name('reportes.index');
+                Route::get('/reportes/incidencias', [ReporteMetricasController::class, 'incidencias'])
+                    ->name('reportes.incidencias');
+                Route::get('/reportes/rutas', [ReporteMetricasController::class, 'rutas'])
+                    ->name('reportes.rutas');
+                Route::get('/reportes/tachos', [ReporteMetricasController::class, 'tachos'])
+                    ->name('reportes.tachos');
+                Route::get('/reportes/personal', [ReporteMetricasController::class, 'personal'])
+                    ->name('reportes.personal');
+                Route::get('/reportes/{seccion}/pdf', [ReporteMetricasController::class, 'pdf'])
+                    ->whereIn('seccion', ['resumen', 'incidencias', 'rutas', 'tachos', 'personal'])
+                    ->name('reportes.pdf');
+            });
 
             Route::middleware('module:tachos')->group(function () {
                 Route::get('/tachos', [TachoController::class, 'index'])->name('tachos.index');

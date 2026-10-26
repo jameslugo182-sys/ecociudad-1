@@ -78,7 +78,8 @@ export default function AdminReporteRow({
                         <select
                             value={asignacion.data.assigned_to}
                             onChange={(event) => asignacion.setData('assigned_to', event.target.value)}
-                            className="w-full rounded-lg border-slate-300 py-2 text-xs focus:border-emerald-500 focus:ring-emerald-500"
+                            disabled={reporte.estado === 'Atendido'}
+                            className="w-full rounded-lg border-slate-300 py-2 text-xs focus:border-emerald-500 focus:ring-emerald-500 disabled:bg-slate-100"
                             aria-label={`Responsable del reporte ${reporte.id}`}
                         >
                             <option value="">Seleccionar responsable</option>
@@ -90,7 +91,7 @@ export default function AdminReporteRow({
                         </select>
                         <button
                             type="submit"
-                            disabled={asignacion.processing || !asignacion.data.assigned_to}
+                            disabled={asignacion.processing || !asignacion.data.assigned_to || reporte.estado === 'Atendido'}
                             className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
                         >
                             Asignar
@@ -107,7 +108,8 @@ export default function AdminReporteRow({
                         <button
                             type="button"
                             onClick={() => actualizarEstado('Atendido')}
-                            disabled={actualizandoEstado}
+                            disabled={actualizandoEstado || !reporte.assigned_to}
+                            title={reporte.assigned_to ? undefined : 'Asigna un responsable antes de marcar como atendido'}
                             className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
                         >
                             Marcar atendido

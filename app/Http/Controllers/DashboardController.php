@@ -45,7 +45,7 @@ class DashboardController extends Controller
             'contratos' => $this->modulo('Gestión de contratos', 'Administra contratos, cuentas, cargos y roles del personal.', 'contratos', route('administracion.contratos.index')),
             'vehiculos' => $this->modulo('Vehículos', 'Registra la flota y conforma los equipos de cada vehículo.', 'vehiculos', route('administracion.vehiculos.index')),
             'rutas' => $this->modulo('Gestión de rutas', 'Visualiza incidencias, equipos y la planificación territorial.', 'rutas', route('administracion.rutas.index')),
-            'reportes' => $this->modulo('Reportes', 'Revisa indicadores y métricas operativas del sistema.', 'reportes', route('administracion.reportes.index')),
+            'reportes' => $this->modulo('Reportes', 'Informes operativos de incidencias, rutas, flota, tachos y personal.', 'reportes', route('administracion.reportes.index')),
             'tachos' => $this->modulo('Tachos IoT', 'Puntos fijos en el mapa, capacidad del contenedor y alertas del ESP32.', 'tachos', route('administracion.tachos.index')),
             'operaciones' => $this->modulo('Operaciones asignadas', 'Consulta las tareas de limpieza y registra evidencias.', 'vehiculos', route('limpieza.dashboard')),
         ];

@@ -84,9 +84,11 @@ Estados de reporte: `Pendiente` → `Asignado` → `En atención` → `Atendido`
 
 Detalle en [RUTAS_MAPAS.md](RUTAS_MAPAS.md).
 
-### Reportes (métricas)
+### Reportes (informes operativos)
 
-- Indicadores por estado y operación (`ReporteMetricasController`). No confundir con `/reportes` del ciudadano.
+- Resumen, incidencias, rutas/flota, tachos IoT y personal/contratos. Todo se calcula de las tablas del sistema (no hay datos de demostración).
+- Filtro por periodo y PDF (`ReporteMetricasController` + `InformeOperativoService`).
+- No confundir con `/reportes` del ciudadano.
 
 ### Tachos IoT
 

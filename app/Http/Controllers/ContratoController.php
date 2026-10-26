@@ -166,9 +166,11 @@ class ContratoController extends Controller
                 'required',
                 'string',
                 'regex:/^[0-9]{8,12}$/',
-                ...($paraFormato
+                // Al registrar, un documento existente corresponde a una renovación del mismo
+                // colaborador. Solo al editar se impide tomar el documento de otra persona.
+                ...($paraFormato || $contrato === null
                     ? []
-                    : [Rule::unique('colaboradores', 'documento')->ignore($contrato?->colaborador_id)]),
+                    : [Rule::unique('colaboradores', 'documento')->ignore($contrato->colaborador_id)]),
             ],
             'nombres' => ['required', 'string', 'max:120'],
             'apellido_paterno' => ['required', 'string', 'max:80'],
@@ -210,7 +212,7 @@ class ContratoController extends Controller
         ], [
             'documento.required' => 'Ingresa el DNI o documento.',
             'documento.regex' => 'El documento debe tener entre 8 y 12 dígitos.',
-            'documento.unique' => 'Ya existe un colaborador con ese documento.',
+            'documento.unique' => 'Ya existe otro colaborador con ese documento.',
             'apellido_materno.required' => 'Ingresa el apellido materno.',
             'sexo.required' => 'Selecciona el sexo.',
             'nacionalidad.required' => 'Ingresa la nacionalidad.',

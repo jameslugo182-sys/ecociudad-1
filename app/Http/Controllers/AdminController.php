@@ -10,12 +10,25 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AdminController extends Controller
 {
     private const ESTADOS = ['Pendiente', 'Asignado', 'En atención', 'Atendido'];
+
+    /**
+     * Cambios de estado permitidos desde el panel administrativo.
+     *
+     * @var array<string, array<int, string>>
+     */
+    private const TRANSICIONES = [
+        'Pendiente' => ['Asignado'],
+        'Asignado' => ['Pendiente', 'En atención', 'Atendido'],
+        'En atención' => ['Asignado', 'Atendido'],
+        'Atendido' => ['En atención'],
+    ];
 
     public function __construct(
         private readonly TrazadoRutaService $trazado,
@@ -87,6 +100,8 @@ class AdminController extends Controller
         $validated = $request->validate([
             'estado' => ['required', Rule::in(self::ESTADOS)],
         ]);
+        $this->validarTransicion($reporte, $validated['estado']);
+
         $debeNotificar = $reporte->estado !== 'Atendido' && $validated['estado'] === 'Atendido';
 
         $reporte->update([
@@ -95,10 +110,29 @@ class AdminController extends Controller
         ]);
 
         if ($debeNotificar) {
-            $reporte->user->notify(new ReporteAtendido($reporte));
+            $reporte->user?->notify(new ReporteAtendido($reporte));
         }
 
         return back()->with('success', "El reporte #{$reporte->id} cambió a {$validated['estado']}.");
+    }
+
+    private function validarTransicion(Reporte $reporte, string $nuevoEstado): void
+    {
+        if ($nuevoEstado === $reporte->estado) {
+            return;
+        }
+
+        if (! in_array($nuevoEstado, self::TRANSICIONES[$reporte->estado] ?? [], true)) {
+            throw ValidationException::withMessages([
+                'estado' => "Un reporte en estado {$reporte->estado} no puede pasar a {$nuevoEstado}.",
+            ]);
+        }
+
+        if ($nuevoEstado !== 'Pendiente' && $reporte->assigned_to === null) {
+            throw ValidationException::withMessages([
+                'estado' => 'Asigna el reporte a un responsable antes de cambiar su estado.',
+            ]);
+        }
     }
 
     public function asignar(Request $request, Reporte $reporte): RedirectResponse
@@ -111,6 +145,12 @@ class AdminController extends Controller
                     ->where('activo', true),
             ],
         ]);
+
+        if ($reporte->estado === 'Atendido') {
+            throw ValidationException::withMessages([
+                'assigned_to' => 'Un reporte atendido no puede reasignarse.',
+            ]);
+        }
 
         $reporte->update([
             'assigned_to' => $validated['assigned_to'],

@@ -122,7 +122,9 @@ class FormValidationTest extends TestCase
             ->post(route('administracion.contratos.store'), $this->payloadContrato($cargo->id, $area->id, [
                 'numero' => 'CON-2026-DUP',
             ]))
-            ->assertSessionHasErrors('documento');
+            ->assertSessionHasErrors('fecha_inicio');
+
+        $this->assertDatabaseCount('contratos', 1);
     }
 
     public function test_citizen_report_requires_photo_gps_type_and_description(): void
