@@ -1,0 +1,44 @@
+﻿
+   PASS  Tests\Feature\AdministrationTest
+  Ô£ô account can only be created after registering a contract                                                     1.38s  
+  Ô£ô contract format pdf is generated from form data                                                              2.10s  
+  Ô£ô collaborator without contract cannot receive an account                                                      0.21s  
+
+   PASS  Tests\Feature\AuditoriaCalidadTest
+  Ô£ô admin dashboard filters and map share route names                                                            0.40s  
+
+   PASS  Tests\Feature\EcoCiudadFlowTest
+  Ô£ô each role can only access its own module                                                                     0.29s  
+  Ô£ô citizen only sees their own reports                                                                          0.27s  
+  Ô£ô municipal staff can assign a report to cleaning staff                                                        0.20s  
+  Ô£ô only assigned cleaning staff can close with evidence                                                         0.32s  
+
+   PASS  Tests\Feature\FormValidationTest
+  Ô£ô contract rejects incomplete personal data and duplicate document                                             0.41s  
+  Ô£ô citizen report requires photo gps type and description                                                       0.30s  
+  Ô£ô masters and roles reject empty or duplicate names                                                            0.34s  
+  Ô£ô collaborator account requires password confirmation and role                                                 0.30s  
+  Ô£ô unauthenticated user cannot submit protected forms                                                           0.18s  
+
+   PASS  Tests\Feature\ModulosIncidenciasContratosTest
+  Ô£ô citizen registers incident and photo is stored                                                               0.25s  
+  Ô£ô report rejects non image files and out of range coordinates                                                  0.27s  
+  Ô£ô assignment rejects users that are not active cleaning staff                                                  0.24s  
+  Ô£ô attending an incident notifies the citizen and reopening clears the date                                     0.28s  
+  Ô£ô pending incident cannot jump to attended or progress without a responsible                                   0.34s  
+  Ô£ô incident follows the allowed status flow                                                                     0.58s  
+  Ô£ô attended incident cannot be reassigned but an active one can                                                 0.26s  
+  Ô£ô contract number must be unique and end date cannot precede start                                             0.40s  
+  Ô£ô contract can be edited keeping its own number                                                                0.32s  
+  Ô£ô editing a contract cannot overlap another contract of the same collaborator                                  0.32s  
+  Ô£ô existing collaborator can receive a renewal contract                                                         0.33s  
+  Ô£ô new contract cannot overlap an existing one of the same collaborator                                         0.44s  
+  Ô£ô editing a contract cannot take the document of another collaborator                                          0.39s  
+  Ô£ô contract document must be a pdf                                                                              0.31s  
+  Ô£ô contract list filters by search term and status                                                              0.55s  
+  Ô£ô account rejects duplicate email and deactivation blocks login                                                0.72s  
+  Ô£ô contracts module is closed to guests and roles without the module                                            0.38s  
+
+  Tests:    30 passed (258 assertions)
+  Duration: 13.83s
+

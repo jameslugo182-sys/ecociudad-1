@@ -1,0 +1,58 @@
+DEFECTOS CONFIRMADOS EN LOS MODULOS "INCIDENCIAS REGISTRADAS" Y "GESTION DE CONTRATOS"
+Fecha de deteccion: 26/10/2026. Entorno: PHP 8.2.12, Laravel 12.69.1, PHPUnit 11.5.56, SQLite en memoria.
+Resultado de la ejecucion inicial: tres escenarios fallaron (comportamiento real distinto del esperado).
+Los escenarios de sondeo se eliminaron; este archivo conserva la salida obtenida y la correccion aplicada.
+
+==================================================================
+ESTADO ACTUAL: LOS TRES DEFECTOS ESTAN CORREGIDOS Y VERIFICADOS
+(commit da0f184, rama Rama-Alex; suite completa: 105 pruebas, 1009 aserciones, todas aprobadas)
+==================================================================
+
+------------------------------------------------------------------
+D-01  (caso CON-15, bloqueaba CON-16)  Renovacion de contrato para un colaborador ya registrado
+------------------------------------------------------------------
+Escenario: el administrador registra un contrato nuevo (numero distinto, fechas vigentes)
+para un colaborador que ya tiene un contrato anterior, usando el mismo documento.
+Esperado : el contrato se registra y se vincula al colaborador existente.
+Obtenido (antes de corregir): el formulario rechazaba la operacion.
+  Session has unexpected errors:
+  { "default": [ "Ya existe un colaborador con ese documento." ] }
+  Failed asserting that true is false.   (assertSessionHasNoErrors)
+Consecuencia: no se podian registrar renovaciones ni contratos sucesivos de la misma persona;
+la validacion de cruce de fechas al crear (validarCruceFechas) no se llegaba a ejercitar.
+Correccion: ContratoController::validar ya no aplica la regla "documento unico" al registrar
+(el alta reutiliza al colaborador por documento y valida el cruce de fechas); al editar se
+mantiene la regla para impedir tomar el documento de otra persona.
+Verificacion: CON-15, CON-16, CON-17 y CON-01 (aprobados).
+
+------------------------------------------------------------------
+D-02  (caso INC-11)  Salto de estado Pendiente -> Atendido
+------------------------------------------------------------------
+Escenario: PATCH admin.reportes.estado con estado=Atendido sobre un reporte en estado Pendiente
+(sin asignacion de personal ni evidencia de cierre).
+Esperado : la operacion se rechaza con error de validacion en "estado".
+Obtenido (antes de corregir): la operacion se aceptaba (sin errores).
+  Session is missing expected key [errors].
+  Failed asserting that false is true.   (assertSessionHasErrors('estado'))
+Consecuencia: un reporte podia marcarse como atendido sin pasar por asignacion y atencion,
+invalidando la trazabilidad y notificando al ciudadano un cierre sin atencion real.
+Correccion: AdminController::actualizarEstado valida las transiciones permitidas
+(Pendiente->Asignado; Asignado->Pendiente/En atencion/Atendido; En atencion->Asignado/Atendido;
+Atendido->En atencion) y exige un responsable asignado. La interfaz deshabilita
+"Marcar atendido" cuando el reporte no tiene responsable.
+Verificacion: INC-11, INC-13 e INC-09 (aprobados).
+
+------------------------------------------------------------------
+D-03  (caso INC-12)  Reasignacion de un reporte ya Atendido
+------------------------------------------------------------------
+Escenario: PATCH admin.reportes.asignar sobre un reporte en estado Atendido con un
+usuario de limpieza activo.
+Esperado : la operacion se rechaza (un reporte cerrado no debe reasignarse).
+Obtenido (antes de corregir): la operacion se aceptaba (sin errores).
+  Session is missing expected key [errors].
+  Failed asserting that false is true.   (assertSessionHasErrors())
+Consecuencia: un incidente cerrado podia volver al estado Asignado, alterando las
+estadisticas del modulo de Reportes y el historial de atencion.
+Correccion: AdminController::asignar rechaza los reportes Atendido (error en assigned_to);
+la interfaz bloquea el selector y el boton de asignacion en esos reportes.
+Verificacion: INC-12 (aprobado).

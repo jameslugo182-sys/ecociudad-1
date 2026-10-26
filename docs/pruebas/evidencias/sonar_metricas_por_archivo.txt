@@ -1,0 +1,11 @@
+﻿Metricas SonarQube por archivo (proyecto Ecociudad, analisis 26/10/2026 16:11)
+archivo | ncloc | cobertura % | lineas sin cubrir | code smells | bugs | vulnerabilidades | duplicacion %
+app/Http/Controllers/ContratoController.php | 258 | 98.5 | 3 | 0 | 0 | 0 | 0.0
+app/Http/Controllers/CuentaColaboradorController.php | 96 | 47.8 | 36 | 0 | 0 | 0 | 0.0
+app/Http/Controllers/MaestroContratoController.php | 187 | 38.5 | 75 | 0 | 0 | 0 | 0.0
+app/Http/Controllers/ReporteController.php | 63 | 95.1 | 2 | 0 | 0 | 0 | 0.0
+app/Http/Controllers/AdminController.php | 188 | 100.0 | 0 | 0 | 0 | 0 | 0.0
+app/Http/Controllers/LimpiezaController.php | 116 | 89.8 | 9 | 0 | 0 | 0 | 0.0
+app/Models/Contrato.php | 56 | 94.7 | 1 | 0 | 0 | 0 | 0.0
+app/Models/Colaborador.php | 60 | 76.5 | 4 | 0 | 0 | 0 | 0.0
+app/Models/Reporte.php | 68 | 96.3 | 1 | 0 | 0 | 0 | 0.0
