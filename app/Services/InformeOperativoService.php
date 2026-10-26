@@ -190,9 +190,7 @@ class InformeOperativoService
             'rutas' => $rutas,
             'porEstado' => $porEstado,
             'resumenRutas' => [
-                'total' => $rutas->count() === 100
-                    ? $this->entreFechas(RutaRecoleccion::query(), 'fecha', $desde, $hasta)->count()
-                    : $rutas->count(),
+                'total' => $this->entreFechas(RutaRecoleccion::query(), 'fecha', $desde, $hasta)->count(),
                 'km' => round((float) $porEstado->sum('km'), 1),
                 'activas' => RutaRecoleccion::query()->activas()->count(),
                 'vehiculos' => $camiones->count(),

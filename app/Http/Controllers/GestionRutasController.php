@@ -307,15 +307,8 @@ class GestionRutasController extends Controller
 
     private function conductorDelEquipo(Camion $camion): User
     {
-        $conductor = $camion->personal->firstWhere('pivot.puesto', 'conductor');
-
-        if (! $conductor instanceof User) {
-            throw ValidationException::withMessages([
-                'camion_id' => 'El vehículo debe tener un conductor asignado.',
-            ]);
-        }
-
-        return $conductor;
+        // camionConEquipoCompleto() ya garantiza que el equipo tiene exactamente un conductor.
+        return $camion->personal->firstWhere('pivot.puesto', 'conductor');
     }
 
     private function reportesDisponibles(): Builder

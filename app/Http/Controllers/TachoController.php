@@ -224,20 +224,8 @@ class TachoController extends Controller
      */
     private function resumen(Tacho $tacho): array
     {
-        $incidencia = $tacho->relationLoaded('incidenciaAbiertaRelacion')
-            ? $tacho->incidenciaAbiertaRelacion
-            : $tacho->incidenciaAbierta();
-
-        $enRuta = false;
-        if ($incidencia && $incidencia->relationLoaded('rutas')) {
-            $enRuta = $incidencia->rutas->contains(
-                fn ($ruta) => $ruta->estaActiva()
-            );
-        } elseif ($incidencia) {
-            $enRuta = $incidencia->rutas()
-                ->whereIn('rutas_recoleccion.estado', RutaRecoleccion::ESTADOS_ACTIVAS)
-                ->exists();
-        }
+        $incidencia = $tacho->incidenciaAbiertaRelacion;
+        $enRuta = $incidencia?->rutas->contains(fn ($ruta) => $ruta->estaActiva()) ?? false;
 
         return [
             'id' => $tacho->id,

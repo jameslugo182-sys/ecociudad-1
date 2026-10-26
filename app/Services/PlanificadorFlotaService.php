@@ -20,11 +20,8 @@ class PlanificadorFlotaService
         $grupos = $this->agrupar($reportes, max(1, min($vehiculos, count($reportes))));
         $propuestas = [];
 
+        // agrupar() ya descarta los grupos vacíos, por lo que cada grupo tiene paradas.
         foreach ($grupos as $indice => $grupo) {
-            if ($grupo === []) {
-                continue;
-            }
-
             $trazado = $this->trazado->trazar($grupo);
             $paradas = [];
 
@@ -174,13 +171,9 @@ class PlanificadorFlotaService
                 continue;
             }
 
+            // Hay al menos tantas incidencias como grupos, así que siempre existe un grupo con 2 o más.
             $origen = $this->indiceGrupoMasGrande($grupos);
-            if ($origen === null || count($grupos[$origen]) < 2) {
-                continue;
-            }
-
-            $movido = array_pop($grupos[$origen]);
-            $grupos[$indice][] = $movido;
+            $grupos[$indice][] = array_pop($grupos[$origen]);
         }
 
         return $grupos;
@@ -189,19 +182,11 @@ class PlanificadorFlotaService
     /**
      * @param  array<int, array<int, Reporte>>  $grupos
      */
-    private function indiceGrupoMasGrande(array $grupos): ?int
+    private function indiceGrupoMasGrande(array $grupos): int
     {
-        $indice = null;
-        $tamano = 0;
+        $tamanos = array_map('count', $grupos);
 
-        foreach ($grupos as $actual => $grupo) {
-            if (count($grupo) > $tamano) {
-                $tamano = count($grupo);
-                $indice = $actual;
-            }
-        }
-
-        return $indice;
+        return (int) array_search(max($tamanos), $tamanos, true);
     }
 
     /**
@@ -235,10 +220,6 @@ class PlanificadorFlotaService
      */
     private function centroide(array $grupo): array
     {
-        if ($grupo === []) {
-            return [TrazadoRutaService::BASE_LATITUD, TrazadoRutaService::BASE_LONGITUD];
-        }
-
         $lat = 0.0;
         $lng = 0.0;
 
