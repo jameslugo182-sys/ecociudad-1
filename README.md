@@ -14,6 +14,7 @@ Toda la documentación viva está en [`docs/`](docs/README.md):
 - [Dominio y datos](docs/DOMINIO.md)
 - [Rutas, mapas y cronograma](docs/RUTAS_MAPAS.md)
 - [Desarrollo local](docs/DESARROLLO.md)
+- [Despliegue Docker](docs/DESPLIEGUE_DOCKER.md)
 - [Tachos IoT / ESP32](docs/IOT.md)
 
 ## Arranque rápido
