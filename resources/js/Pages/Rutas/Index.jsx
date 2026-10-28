@@ -14,6 +14,14 @@ const coloresEstado = {
 };
 const coloresRuta = ['#059669', '#2563eb', '#7c3aed', '#dc2626', '#0891b2'];
 
+function etiquetaGenerar(procesando, modo) {
+    if (procesando) {
+        return 'Optimizando…';
+    }
+
+    return modo === 'todas' ? 'Asignar recorrido al vehículo' : 'Generar y asignar ruta';
+}
+
 function AjustarMapa({ puntos }) {
     const map = useMap();
 
@@ -288,14 +296,14 @@ export default function Index({ reportes, equipos, rutas, routeNames }) {
                                 </div>
 
                                 <label className="block text-xs font-semibold text-slate-600">
-                                    Fecha de operación
+                                    <span>Fecha de operación</span>
                                     <input type="date" value={form.data.fecha} onChange={(event) => form.setData('fecha', event.target.value)} className="mt-1.5 w-full border-slate-300 text-sm" required />
                                 </label>
 
                                 {modo === 'especificas' ? (
                                     <>
                                         <label className="block text-xs font-semibold text-slate-600">
-                                            Vehículo y equipo
+                                            <span>Vehículo y equipo</span>
                                             <select value={form.data.camion_id} onChange={(event) => form.setData('camion_id', event.target.value)} className="mt-1.5 w-full border-slate-300 text-sm" required>
                                                 <option value="">Seleccionar vehículo</option>
                                                 {equipos.map((equipo) => (
@@ -396,7 +404,7 @@ export default function Index({ reportes, equipos, rutas, routeNames }) {
                                                     ))}
                                                 </ol>
                                                 <label className="block text-xs font-semibold text-slate-600">
-                                                    Asignar a vehículo
+                                                    <span>Asignar a vehículo</span>
                                                     <select value={form.data.camion_id} onChange={(event) => form.setData('camion_id', event.target.value)} className="mt-1.5 w-full border-slate-300 text-sm" required>
                                                         <option value="">Seleccionar vehículo</option>
                                                         {equipos.map((equipo) => (
@@ -423,9 +431,7 @@ export default function Index({ reportes, equipos, rutas, routeNames }) {
                                         disabled={form.processing || !form.data.camion_id || !form.data.reporte_ids.length}
                                         className="w-full bg-emerald-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-40"
                                     >
-                                        {form.processing
-                                            ? 'Optimizando…'
-                                            : (modo === 'todas' ? 'Asignar recorrido al vehículo' : 'Generar y asignar ruta')}
+                                        {etiquetaGenerar(form.processing, modo)}
                                     </button>
                                 )}
                             </form>

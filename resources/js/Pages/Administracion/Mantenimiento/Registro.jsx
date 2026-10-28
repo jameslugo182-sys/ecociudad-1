@@ -65,7 +65,7 @@ export default function Registro({ camiones, tipos, registros }) {
 
                             <div className="mt-5 space-y-4">
                                 <label className="block text-xs font-semibold text-slate-600">
-                                    Vehículo registrado
+                                    <span>Vehículo registrado</span>
                                     <select
                                         value={form.data.camion_id}
                                         onChange={(event) => form.setData('camion_id', event.target.value)}
@@ -82,7 +82,7 @@ export default function Registro({ camiones, tipos, registros }) {
                                 </label>
 
                                 <label className="block text-xs font-semibold text-slate-600">
-                                    Tipo de mantenimiento
+                                    <span>Tipo de mantenimiento</span>
                                     <select
                                         value={form.data.tipo_mantenimiento_id}
                                         onChange={(event) => form.setData('tipo_mantenimiento_id', event.target.value)}
@@ -98,7 +98,7 @@ export default function Registro({ camiones, tipos, registros }) {
                                 </label>
 
                                 <label className="block text-xs font-semibold text-slate-600">
-                                    Motivo
+                                    <span>Motivo</span>
                                     <textarea
                                         value={form.data.motivo}
                                         onChange={(event) => form.setData('motivo', event.target.value)}

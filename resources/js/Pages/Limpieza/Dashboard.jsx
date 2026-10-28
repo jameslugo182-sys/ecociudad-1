@@ -9,6 +9,20 @@ const navegacionLimpieza = [
     { label: 'Mi recorrido', href: route('limpieza.rutas.index'), active: 'limpieza.rutas.index' },
 ];
 
+function resumenRuta(ruta) {
+    if (!ruta) {
+        return 'Cuando te asignen un recorrido, aquí verás solo la ruta de tu vehículo.';
+    }
+
+    const partes = [ruta.camion.codigo, ruta.camion.placa, `${ruta.distancia_estimada_km} km`];
+
+    if (ruta.horario_resumen) {
+        partes.push(ruta.horario_resumen);
+    }
+
+    return partes.join(' · ');
+}
+
 export default function Dashboard({ reportes, resumen, rutaAsignada }) {
     const activos = reportes.filter((reporte) => reporte.estado !== 'Atendido');
     const finalizados = reportes.filter((reporte) => reporte.estado === 'Atendido');
@@ -42,11 +56,7 @@ export default function Dashboard({ reportes, resumen, rutaAsignada }) {
                         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
                             <div>
                                 <h3 className="font-bold text-slate-900">Ruta de tu flota</h3>
-                                <p className="text-xs text-slate-500">
-                                    {rutaAsignada
-                                        ? `${rutaAsignada.camion.codigo} · ${rutaAsignada.camion.placa} · ${rutaAsignada.distancia_estimada_km} km${rutaAsignada.horario_resumen ? ` · ${rutaAsignada.horario_resumen}` : ''}`
-                                        : 'Cuando te asignen un recorrido, aquí verás solo la ruta de tu vehículo.'}
-                                </p>
+                                <p className="text-xs text-slate-500">{resumenRuta(rutaAsignada)}</p>
                             </div>
                             {rutaAsignada && (
                                 <a

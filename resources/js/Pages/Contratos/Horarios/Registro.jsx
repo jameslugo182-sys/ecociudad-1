@@ -88,7 +88,7 @@ export default function Registro({ horarios, colaboradores, plantillas }) {
                             <div className="space-y-5 p-6">
                                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                                     <label className="text-xs font-semibold text-slate-600">
-                                        Colaborador *
+                                        <span>Colaborador *</span>
                                         <select
                                             value={form.data.colaborador_id}
                                             onChange={(event) => form.setData('colaborador_id', event.target.value)}
@@ -104,7 +104,7 @@ export default function Registro({ horarios, colaboradores, plantillas }) {
                                         </select>
                                     </label>
                                     <label className="text-xs font-semibold text-slate-600">
-                                        Usar plantilla
+                                        <span>Usar plantilla</span>
                                         <select
                                             value={form.data.plantilla_horario_id}
                                             onChange={(event) => aplicarPlantilla(event.target.value)}
@@ -119,7 +119,7 @@ export default function Registro({ horarios, colaboradores, plantillas }) {
                                         </select>
                                     </label>
                                     <label className="text-xs font-semibold text-slate-600">
-                                        Vigencia desde *
+                                        <span>Vigencia desde *</span>
                                         <input
                                             type="date"
                                             value={form.data.vigencia_inicio}
@@ -129,7 +129,7 @@ export default function Registro({ horarios, colaboradores, plantillas }) {
                                         />
                                     </label>
                                     <label className="text-xs font-semibold text-slate-600">
-                                        Vigencia hasta
+                                        <span>Vigencia hasta</span>
                                         <input
                                             type="date"
                                             value={form.data.vigencia_fin}

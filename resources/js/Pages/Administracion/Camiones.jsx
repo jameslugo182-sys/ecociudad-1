@@ -178,7 +178,7 @@ export default function Camiones({ camiones, filters, estados, siguienteCodigo }
                                 <div className="space-y-5 p-6">
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <label className="text-xs font-semibold text-slate-600">
-                                            2. Código
+                                            <span>2. Código</span>
                                             <input
                                                 value={codigoVisible}
                                                 readOnly
@@ -186,7 +186,7 @@ export default function Camiones({ camiones, filters, estados, siguienteCodigo }
                                             />
                                         </label>
                                         <label className="text-xs font-semibold text-slate-600">
-                                            3. Placa *
+                                            <span>3. Placa *</span>
                                             <input
                                                 value={form.data.placa}
                                                 onChange={(event) => form.setData('placa', event.target.value.toUpperCase())}
@@ -198,7 +198,7 @@ export default function Camiones({ camiones, filters, estados, siguienteCodigo }
                                             {form.errors.placa && <span className="mt-1 block font-medium text-red-600">{form.errors.placa}</span>}
                                         </label>
                                         <label className="text-xs font-semibold text-slate-600">
-                                            4. Marca *
+                                            <span>4. Marca *</span>
                                             <input
                                                 value={form.data.marca}
                                                 onChange={(event) => form.setData('marca', event.target.value)}
@@ -209,7 +209,7 @@ export default function Camiones({ camiones, filters, estados, siguienteCodigo }
                                             {form.errors.marca && <span className="mt-1 block font-medium text-red-600">{form.errors.marca}</span>}
                                         </label>
                                         <label className="text-xs font-semibold text-slate-600">
-                                            5. Modelo *
+                                            <span>5. Modelo *</span>
                                             <input
                                                 value={form.data.modelo}
                                                 onChange={(event) => form.setData('modelo', event.target.value)}
@@ -219,7 +219,7 @@ export default function Camiones({ camiones, filters, estados, siguienteCodigo }
                                             {form.errors.modelo && <span className="mt-1 block font-medium text-red-600">{form.errors.modelo}</span>}
                                         </label>
                                         <label className="text-xs font-semibold text-slate-600">
-                                            6. Año *
+                                            <span>6. Año *</span>
                                             <input
                                                 type="number"
                                                 min="1980"
@@ -232,7 +232,7 @@ export default function Camiones({ camiones, filters, estados, siguienteCodigo }
                                             {form.errors.anio && <span className="mt-1 block font-medium text-red-600">{form.errors.anio}</span>}
                                         </label>
                                         <label className="text-xs font-semibold text-slate-600">
-                                            7. Capacidad (kg) *
+                                            <span>7. Capacidad (kg) *</span>
                                             <input
                                                 type="number"
                                                 min="1"
@@ -246,7 +246,7 @@ export default function Camiones({ camiones, filters, estados, siguienteCodigo }
                                             {form.errors.capacidad_kg && <span className="mt-1 block font-medium text-red-600">{form.errors.capacidad_kg}</span>}
                                         </label>
                                         <label className="text-xs font-semibold text-slate-600 sm:col-span-2">
-                                            8. Estado *
+                                            <span>8. Estado *</span>
                                             <select
                                                 value={form.data.estado}
                                                 onChange={(event) => form.setData('estado', event.target.value)}

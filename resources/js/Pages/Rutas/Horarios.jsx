@@ -3,6 +3,14 @@ import { DIAS_RECOLECCION, horaCorta, navegacionRutas } from '@/horarioRuta';
 import ModuleLayout from '@/Layouts/ModuleLayout';
 import { Head, useForm } from '@inertiajs/react';
 
+function etiquetaGuardar(procesando, tieneHorario) {
+    if (procesando) {
+        return 'Guardando…';
+    }
+
+    return tieneHorario ? 'Actualizar horario' : 'Asignar horario';
+}
+
 function HorarioRutaForm({ ruta, routeName }) {
     const form = useForm({
         hora_inicio: horaCorta(ruta.hora_inicio) || '07:00',
@@ -56,7 +64,7 @@ function HorarioRutaForm({ ruta, routeName }) {
 
             <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block text-xs font-semibold text-slate-600">
-                    Hora de salida
+                    <span>Hora de salida</span>
                     <input
                         type="time"
                         value={form.data.hora_inicio}
@@ -69,7 +77,7 @@ function HorarioRutaForm({ ruta, routeName }) {
                     )}
                 </label>
                 <label className="block text-xs font-semibold text-slate-600">
-                    Hora de retorno
+                    <span>Hora de retorno</span>
                     <input
                         type="time"
                         value={form.data.hora_fin}
@@ -84,7 +92,7 @@ function HorarioRutaForm({ ruta, routeName }) {
             </div>
 
             <label className="block text-xs font-semibold text-slate-600">
-                Nota operativa
+                <span>Nota operativa</span>
                 <input
                     type="text"
                     value={form.data.horario_nota}
@@ -103,7 +111,7 @@ function HorarioRutaForm({ ruta, routeName }) {
                 disabled={form.processing || !form.data.dias_recoleccion.length}
                 className="w-full bg-emerald-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-40"
             >
-                {form.processing ? 'Guardando…' : ruta.horario_resumen ? 'Actualizar horario' : 'Asignar horario'}
+                {etiquetaGuardar(form.processing, Boolean(ruta.horario_resumen))}
             </button>
         </form>
     );

@@ -96,11 +96,11 @@ export default function Roles({ roles, modulos }) {
                             </div>
                             <div className="space-y-4 p-6">
                                 <label className="block text-xs font-semibold text-slate-600">
-                                    Nombre visible *
+                                    <span>Nombre visible *</span>
                                     <input value={form.data.nombre} onChange={(event) => form.setData('nombre', event.target.value)} className="mt-1.5 w-full rounded-xl border-slate-300 text-sm" required />
                                 </label>
                                 <label className="block text-xs font-semibold text-slate-600">
-                                    Código interno *
+                                    <span>Código interno *</span>
                                     <input
                                         value={form.data.codigo}
                                         onChange={(event) => form.setData('codigo', event.target.value.toLowerCase().replace(/\s+/g, '_'))}
@@ -110,7 +110,7 @@ export default function Roles({ roles, modulos }) {
                                     />
                                 </label>
                                 <label className="block text-xs font-semibold text-slate-600">
-                                    Descripción
+                                    <span>Descripción</span>
                                     <textarea value={form.data.descripcion} onChange={(event) => form.setData('descripcion', event.target.value)} rows="3" className="mt-1.5 w-full rounded-xl border-slate-300 text-sm" />
                                 </label>
                                 <div className="space-y-2 border-t border-slate-200 pt-4">

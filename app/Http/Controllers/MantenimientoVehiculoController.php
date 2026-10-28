@@ -137,9 +137,8 @@ class MantenimientoVehiculoController extends Controller
                 'finalizado_at' => now(),
             ]);
 
-            $estadoAnterior = $mantenimiento->estado_anterior === 'Mantenimiento'
-                ? 'Disponible'
-                : ($mantenimiento->estado_anterior ?: 'Disponible');
+            $anterior = $mantenimiento->estado_anterior;
+            $estadoAnterior = $anterior && $anterior !== 'Mantenimiento' ? $anterior : 'Disponible';
 
             $mantenimiento->camion->update(['estado' => $estadoAnterior]);
         });

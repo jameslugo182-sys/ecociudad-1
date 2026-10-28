@@ -52,7 +52,7 @@ const Content = ({
     contentClasses = 'py-1 bg-white',
     children,
 }) => {
-    const { open, setOpen } = useContext(DropDownContext);
+    const { open } = useContext(DropDownContext);
 
     let alignmentClasses = 'origin-top';
 

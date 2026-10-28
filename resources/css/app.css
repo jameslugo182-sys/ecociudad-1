@@ -172,6 +172,7 @@ input[type='time']::-webkit-datetime-edit-ampm-field {
 }
 
 .cronograma-fc__day {
+    position: relative;
     min-height: 108px;
     padding: 4px 3px 6px;
     border-right: 1px solid var(--fc-border);
@@ -198,7 +199,21 @@ input[type='time']::-webkit-datetime-edit-ampm-field {
     font-weight: 500;
 }
 
+.cronograma-fc__day-hit {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.cronograma-fc__day-hit:focus-visible {
+    outline: 2px solid var(--fc-accent);
+    outline-offset: -2px;
+}
+
 .cronograma-fc__events {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 2px;

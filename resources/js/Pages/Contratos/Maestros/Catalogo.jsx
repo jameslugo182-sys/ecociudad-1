@@ -79,11 +79,11 @@ export default function Catalogo({ titulo, descripcion, placeholderNombre, items
                             </div>
                             <div className="space-y-4 p-6">
                                 <label className="block text-xs font-semibold text-slate-600">
-                                    Nombre *
+                                    <span>Nombre *</span>
                                     <input value={form.data.nombre} onChange={(event) => form.setData('nombre', event.target.value)} placeholder={placeholderNombre} className="mt-1.5 w-full rounded-xl border-slate-300 text-sm" required minLength={2} />
                                 </label>
                                 <label className="block text-xs font-semibold text-slate-600">
-                                    Descripción
+                                    <span>Descripción</span>
                                     <textarea value={form.data.descripcion} onChange={(event) => form.setData('descripcion', event.target.value)} rows="4" className="mt-1.5 w-full rounded-xl border-slate-300 text-sm" />
                                 </label>
                                 {Object.values(form.errors).map((error) => <p key={error} className="text-xs text-red-600">{error}</p>)}

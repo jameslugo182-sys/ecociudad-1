@@ -3,6 +3,7 @@ import InformeCabecera from '@/Components/InformeCabecera';
 import ModuleLayout from '@/Layouts/ModuleLayout';
 import { navegacionReportes } from '@/navegacionReportes';
 import { Head } from '@inertiajs/react';
+import { Children } from 'react';
 
 export default function InformeRutas({
     rutas,
@@ -77,8 +78,7 @@ export default function InformeRutas({
 }
 
 function Tabla({ titulo, columnas, vacio, children }) {
-    const filas = Array.isArray(children) ? children : children ? [children] : [];
-    const hayDatos = filas.filter(Boolean).length > 0;
+    const hayDatos = Children.toArray(children).length > 0;
 
     return (
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

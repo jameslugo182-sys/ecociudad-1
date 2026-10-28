@@ -6,6 +6,14 @@ import { navegacionContratos } from '@/navegacionContratos';
 import { Head, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
+function etiquetaGuardar(procesando, editando) {
+    if (procesando) {
+        return 'Guardando…';
+    }
+
+    return editando ? 'Guardar cambios' : 'Crear cuenta';
+}
+
 const datosIniciales = (roles) => ({
     colaborador_id: '',
     email: '',
@@ -108,7 +116,7 @@ export default function Usuarios({ disponibles, cuentas, roles }) {
                             <div className="space-y-4 p-6">
                                 {!editando && (
                                     <label className="block text-xs font-semibold text-slate-600">
-                                        Colaborador contratado *
+                                        <span>Colaborador contratado *</span>
                                         <select
                                             value={form.data.colaborador_id}
                                             onChange={(event) => seleccionarColaborador(event.target.value)}
@@ -140,7 +148,7 @@ export default function Usuarios({ disponibles, cuentas, roles }) {
                                 )}
 
                                 <label className="block text-xs font-semibold text-slate-600">
-                                    Correo de acceso *
+                                    <span>Correo de acceso *</span>
                                     <input
                                         type="email"
                                         value={form.data.email}
@@ -151,7 +159,7 @@ export default function Usuarios({ disponibles, cuentas, roles }) {
                                 </label>
 
                                 <label className="block text-xs font-semibold text-slate-600">
-                                    Rol del sistema *
+                                    <span>Rol del sistema *</span>
                                     <select value={form.data.rol} onChange={(event) => form.setData('rol', event.target.value)} className="mt-1.5 w-full rounded-xl border-slate-300 text-sm" required>
                                         {roles.map((rol) => <option key={rol.id} value={rol.codigo}>{rol.nombre}</option>)}
                                     </select>
@@ -192,7 +200,7 @@ export default function Usuarios({ disponibles, cuentas, roles }) {
                                         Cancelar
                                     </button>
                                     <button type="submit" disabled={form.processing || (!editando && !disponibles.length)} className="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-40">
-                                        {form.processing ? 'Guardando…' : (editando ? 'Guardar cambios' : 'Crear cuenta')}
+                                        {etiquetaGuardar(form.processing, Boolean(editando))}
                                     </button>
                                 </div>
                             </div>

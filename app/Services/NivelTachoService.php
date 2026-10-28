@@ -115,15 +115,9 @@ class NivelTachoService
             return Tacho::ESTADO_LLENO;
         }
 
-        if ($porcentaje >= $umbral) {
-            return Tacho::ESTADO_ALERTA;
-        }
+        $enAlerta = $porcentaje >= $umbral || ($alertaPrevia && $porcentaje >= $liberar);
 
-        if ($alertaPrevia && $porcentaje >= $liberar) {
-            return Tacho::ESTADO_ALERTA;
-        }
-
-        return Tacho::ESTADO_OPERATIVO;
+        return $enAlerta ? Tacho::ESTADO_ALERTA : Tacho::ESTADO_OPERATIVO;
     }
 
     private function descripcionIncidencia(Tacho $tacho): string

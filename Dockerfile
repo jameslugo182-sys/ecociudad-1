@@ -60,6 +60,8 @@ EXPOSE 9000
 ENTRYPOINT ["entrypoint.sh"]
 CMD ["php-fpm"]
 
-FROM nginx:1.27-alpine AS nginx
+FROM nginxinc/nginx-unprivileged:1.27-alpine AS nginx
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY --from=app /var/www/html/public /var/www/html/public
+USER nginx
+EXPOSE 8080

@@ -113,7 +113,7 @@ export default function HorarioTurnosForm({ turnos, dias, onChangeTurnos, onChan
 
                 <div className="flex items-end gap-2">
                     <label className="text-xs font-semibold text-slate-600">
-                        Cargar en
+                        <span>Cargar en</span>
                         <select
                             value={diaSeleccionado}
                             onChange={(event) => setDiaSeleccionado(Number(event.target.value))}

@@ -132,7 +132,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 Route::patch('/contratos/maestros/sedes/{sede}/estado', [MaestroContratoController::class, 'cambiarEstadoSede'])
                     ->name('contratos.maestros.sedes.estado');
             });
+        });
+});
 
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::prefix('administracion')
+        ->name('administracion.')
+        ->group(function () {
             Route::middleware('module:vehiculos')->group(function () {
                 Route::get('/vehiculos', [CamionController::class, 'index'])->name('vehiculos.index');
                 Route::get('/vehiculos/equipos', [CamionController::class, 'equipos'])->name('vehiculos.equipos');
@@ -208,7 +214,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     ->name('tachos.ruta');
             });
         });
+});
 
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('admin')
         ->name('admin.')
         ->middleware('role:personal_municipal')

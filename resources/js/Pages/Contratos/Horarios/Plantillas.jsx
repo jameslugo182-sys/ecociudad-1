@@ -70,7 +70,7 @@ export default function Plantillas({ plantillas }) {
                             <div className="space-y-5 p-6">
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <label className="text-xs font-semibold text-slate-600">
-                                        Nombre de la plantilla *
+                                        <span>Nombre de la plantilla *</span>
                                         <input
                                             value={form.data.nombre}
                                             onChange={(event) => form.setData('nombre', event.target.value)}
@@ -79,7 +79,7 @@ export default function Plantillas({ plantillas }) {
                                         />
                                     </label>
                                     <label className="text-xs font-semibold text-slate-600">
-                                        Descripción
+                                        <span>Descripción</span>
                                         <input
                                             value={form.data.descripcion}
                                             onChange={(event) => form.setData('descripcion', event.target.value)}

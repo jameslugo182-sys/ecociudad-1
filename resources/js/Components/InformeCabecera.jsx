@@ -40,7 +40,7 @@ export default function InformeCabecera({
                 className={`grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ${estados.length ? 'md:grid-cols-[1fr_1fr_200px_auto]' : 'md:grid-cols-[1fr_1fr_auto]'}`}
             >
                 <label className="text-xs font-semibold text-slate-600">
-                    Desde
+                    <span>Desde</span>
                     <input
                         type="date"
                         value={filtro.data.fecha_desde}
@@ -49,7 +49,7 @@ export default function InformeCabecera({
                     />
                 </label>
                 <label className="text-xs font-semibold text-slate-600">
-                    Hasta
+                    <span>Hasta</span>
                     <input
                         type="date"
                         value={filtro.data.fecha_hasta}
@@ -59,7 +59,7 @@ export default function InformeCabecera({
                 </label>
                 {estados.length > 0 && (
                     <label className="text-xs font-semibold text-slate-600">
-                        Estado
+                        <span>Estado</span>
                         <select
                             value={filtro.data.estado}
                             onChange={(event) => filtro.setData('estado', event.target.value)}

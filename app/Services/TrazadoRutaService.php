@@ -89,10 +89,6 @@ class TrazadoRutaService
             'roundtrip' => 'false',
         ]);
 
-        if ($respuesta === null) {
-            return null;
-        }
-
         $waypoints = $respuesta['waypoints'] ?? [];
         $viaje = $respuesta['trips'][0] ?? null;
 
@@ -100,6 +96,29 @@ class TrazadoRutaService
             return null;
         }
 
+        $paradas = $this->paradasDelViaje($reportes, $waypoints, $viaje['legs'] ?? []);
+        $geometria = $this->geojsonALeaflet($viaje['geometry']['coordinates'] ?? []);
+
+        if ($paradas === null || count($paradas) !== count($reportes) || count($geometria) < 2) {
+            return null;
+        }
+
+        return [
+            'paradas' => $paradas,
+            'geometria' => $geometria,
+            'distancia_km' => round(((float) ($viaje['distance'] ?? 0)) / 1000, 2),
+            'por_vias' => true,
+        ];
+    }
+
+    /**
+     * @param  array<int, Reporte>  $reportes
+     * @param  array<int, array<string, mixed>>  $waypoints
+     * @param  array<int, array<string, mixed>>  $tramos
+     * @return array<int, array{reporte: Reporte, distancia: float}>|null
+     */
+    private function paradasDelViaje(array $reportes, array $waypoints, array $tramos): ?array
+    {
         $ordenEntradaPorViaje = [];
         foreach ($waypoints as $indiceEntrada => $waypoint) {
             $ordenEntradaPorViaje[(int) $waypoint['waypoint_index']] = $indiceEntrada;
@@ -107,7 +126,6 @@ class TrazadoRutaService
         ksort($ordenEntradaPorViaje);
 
         $paradas = [];
-        $tramos = $viaje['legs'] ?? [];
         $indiceTramo = 0;
 
         foreach (array_values($ordenEntradaPorViaje) as $indiceEntrada) {
@@ -128,18 +146,7 @@ class TrazadoRutaService
             $indiceTramo++;
         }
 
-        $geometria = $this->geojsonALeaflet($viaje['geometry']['coordinates'] ?? []);
-
-        if (count($paradas) !== count($reportes) || count($geometria) < 2) {
-            return null;
-        }
-
-        return [
-            'paradas' => $paradas,
-            'geometria' => $geometria,
-            'distancia_km' => round(((float) ($viaje['distance'] ?? 0)) / 1000, 2),
-            'por_vias' => true,
-        ];
+        return $paradas;
     }
 
     /**
@@ -161,11 +168,6 @@ class TrazadoRutaService
     private function consultarRutaParaOrden(array $reportes): ?array
     {
         $respuesta = $this->consultarOsrm('route', $this->coordenadasConBase($reportes));
-
-        if ($respuesta === null) {
-            return null;
-        }
-
         $recorrido = $respuesta['routes'][0] ?? null;
         if ($recorrido === null) {
             return null;

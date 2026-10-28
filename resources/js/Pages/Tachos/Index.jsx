@@ -24,6 +24,14 @@ const datosIniciales = {
     activo: true,
 };
 
+function colorBarra(lleno, alerta) {
+    if (alerta || lleno >= 95) {
+        return 'bg-red-500';
+    }
+
+    return lleno >= 50 ? 'bg-amber-500' : 'bg-emerald-500';
+}
+
 function BarraCapacidad({ tacho }) {
     if (tacho.nivel_porcentaje === null || tacho.nivel_porcentaje === undefined) {
         return <span className="text-xs text-slate-400">Sin lecturas</span>;
@@ -31,7 +39,7 @@ function BarraCapacidad({ tacho }) {
 
     const lleno = tacho.nivel_porcentaje;
     const resto = tacho.capacidad_restante ?? Math.max(0, 100 - lleno);
-    const color = tacho.alerta_activa || lleno >= 95 ? 'bg-red-500' : lleno >= 50 ? 'bg-amber-500' : 'bg-emerald-500';
+    const color = colorBarra(lleno, tacho.alerta_activa);
 
     return (
         <div className="min-w-36">
@@ -42,6 +50,43 @@ function BarraCapacidad({ tacho }) {
             <div className="h-2 overflow-hidden rounded-full bg-slate-200">
                 <div className={`h-full ${color}`} style={{ width: `${lleno}%` }} />
             </div>
+        </div>
+    );
+}
+
+function AccionRutaTacho({ tacho, rutasActivas, rutaSeleccionada, onSeleccionar, onAgregar }) {
+    if (tacho.en_ruta) {
+        return <span className="text-xs font-semibold text-emerald-700">En ruta activa</span>;
+    }
+
+    if (!tacho.alerta_activa) {
+        return <span className="text-xs text-slate-400">Sin alerta</span>;
+    }
+
+    return (
+        <div className="flex min-w-52 flex-col gap-2">
+            <select
+                value={rutaSeleccionada}
+                onChange={(event) => onSeleccionar(event.target.value)}
+                className="rounded-lg border-slate-300 text-xs"
+            >
+                <option value="">Elegir ruta…</option>
+                {rutasActivas.map((ruta) => (
+                    <option key={ruta.id} value={ruta.id}>
+                        {ruta.camion?.codigo || 'Camión'} · {ruta.fecha} · {ruta.estado}
+                    </option>
+                ))}
+            </select>
+            <button
+                type="button"
+                onClick={onAgregar}
+                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white"
+            >
+                Agregar a ruta
+            </button>
+            {rutasActivas.length === 0 && (
+                <p className="text-[11px] text-slate-500">No hay rutas planificadas o en curso.</p>
+            )}
         </div>
     );
 }
@@ -269,7 +314,7 @@ export default function Index({ tachos, filters, estados, siguienteCodigo, alert
                                 <div className="space-y-4 p-6">
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <label className="text-xs font-semibold text-slate-600">
-                                            Código
+                                            <span>Código</span>
                                             <input
                                                 value={codigoVisible}
                                                 readOnly
@@ -277,7 +322,7 @@ export default function Index({ tachos, filters, estados, siguienteCodigo, alert
                                             />
                                         </label>
                                         <label className="text-xs font-semibold text-slate-600">
-                                            Nombre *
+                                            <span>Nombre *</span>
                                             <input
                                                 value={form.data.nombre}
                                                 onChange={(event) => form.setData('nombre', event.target.value)}
@@ -289,7 +334,7 @@ export default function Index({ tachos, filters, estados, siguienteCodigo, alert
                                         </label>
                                     </div>
                                     <label className="block text-xs font-semibold text-slate-600">
-                                        Dirección o referencia
+                                        <span>Dirección o referencia</span>
                                         <input
                                             value={form.data.direccion}
                                             onChange={(event) => form.setData('direccion', event.target.value)}
@@ -298,7 +343,7 @@ export default function Index({ tachos, filters, estados, siguienteCodigo, alert
                                     </label>
                                     <div className="grid gap-4 sm:grid-cols-3">
                                         <label className="text-xs font-semibold text-slate-600">
-                                            Vacío (cm) *
+                                            <span>Vacío (cm) *</span>
                                             <input
                                                 type="number"
                                                 min="20"
@@ -313,7 +358,7 @@ export default function Index({ tachos, filters, estados, siguienteCodigo, alert
                                             )}
                                         </label>
                                         <label className="text-xs font-semibold text-slate-600">
-                                            Lleno (cm) *
+                                            <span>Lleno (cm) *</span>
                                             <input
                                                 type="number"
                                                 min="2"
@@ -328,7 +373,7 @@ export default function Index({ tachos, filters, estados, siguienteCodigo, alert
                                             )}
                                         </label>
                                         <label className="text-xs font-semibold text-slate-600">
-                                            Umbral % *
+                                            <span>Umbral % *</span>
                                             <input
                                                 type="number"
                                                 min="50"
@@ -421,41 +466,13 @@ export default function Index({ tachos, filters, estados, siguienteCodigo, alert
                                             </td>
                                             <td className="px-5 py-4 text-xs text-slate-500">{tacho.ultima_lectura_at || '—'}</td>
                                             <td className="px-5 py-4">
-                                                {tacho.en_ruta ? (
-                                                    <span className="text-xs font-semibold text-emerald-700">En ruta activa</span>
-                                                ) : tacho.alerta_activa ? (
-                                                    <div className="flex min-w-52 flex-col gap-2">
-                                                        <select
-                                                            value={rutaPorTacho[tacho.id] || ''}
-                                                            onChange={(event) =>
-                                                                setRutaPorTacho((actual) => ({
-                                                                    ...actual,
-                                                                    [tacho.id]: event.target.value,
-                                                                }))
-                                                            }
-                                                            className="rounded-lg border-slate-300 text-xs"
-                                                        >
-                                                            <option value="">Elegir ruta…</option>
-                                                            {rutasActivas.map((ruta) => (
-                                                                <option key={ruta.id} value={ruta.id}>
-                                                                    {ruta.camion?.codigo || 'Camión'} · {ruta.fecha} · {ruta.estado}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => agregarARuta(tacho)}
-                                                            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white"
-                                                        >
-                                                            Agregar a ruta
-                                                        </button>
-                                                        {rutasActivas.length === 0 && (
-                                                            <p className="text-[11px] text-slate-500">No hay rutas planificadas o en curso.</p>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-xs text-slate-400">Sin alerta</span>
-                                                )}
+                                                <AccionRutaTacho
+                                                    tacho={tacho}
+                                                    rutasActivas={rutasActivas}
+                                                    rutaSeleccionada={rutaPorTacho[tacho.id] || ''}
+                                                    onSeleccionar={(valor) => setRutaPorTacho((actual) => ({ ...actual, [tacho.id]: valor }))}
+                                                    onAgregar={() => agregarARuta(tacho)}
+                                                />
                                             </td>
                                             <td className="px-5 py-4">
                                                 <div className="flex flex-wrap gap-2">

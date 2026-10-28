@@ -1,5 +1,8 @@
 import { useForm } from '@inertiajs/react';
 
+// El equipo tiene tres puestos fijos de recolector; cada puesto tiene su propia clave.
+const PUESTOS_RECOLECTOR = ['primero', 'segundo', 'tercero'];
+
 export default function CamionAdminCard({ camion, personalLimpieza }) {
     const conductor = camion.personal.find((persona) => persona.pivot.puesto === 'conductor');
     const recolectores = camion.personal.filter((persona) => persona.pivot.puesto === 'recolector');
@@ -85,7 +88,7 @@ export default function CamionAdminCard({ camion, personalLimpieza }) {
 
                 <div className="grid gap-3 sm:grid-cols-3">
                     {equipo.data.recolector_ids.map((recolectorId, indice) => (
-                        <div key={indice}>
+                        <div key={PUESTOS_RECOLECTOR[indice]}>
                             <label htmlFor={`recolector-${camion.id}-${indice}`} className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                                 Recolector {indice + 1}
                             </label>
