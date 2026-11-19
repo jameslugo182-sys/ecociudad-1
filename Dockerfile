@@ -61,7 +61,12 @@ ENTRYPOINT ["entrypoint.sh"]
 CMD ["php-fpm"]
 
 FROM nginxinc/nginx-unprivileged:1.27-alpine AS nginx
-COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+# La plantilla se procesa al arrancar (envsubst): PHP_UPSTREAM indica dónde está PHP-FPM.
+#  - docker compose: app:9000 (valor por defecto)
+#  - Azure Container Instances (grupo de contenedores): 127.0.0.1:9000
+COPY docker/nginx/default.conf /etc/nginx/templates/default.conf.template
 COPY --from=app /var/www/html/public /var/www/html/public
+ENV PHP_UPSTREAM=app:9000 \
+    NGINX_ENVSUBST_FILTER=^PHP_
 USER nginx
 EXPOSE 8080

@@ -4,6 +4,8 @@
 
 No uses el `.env` de XAMPP en el servidor: ese archivo apunta a `127.0.0.1` y suele tener `APP_DEBUG=true`.
 
+> **Archivo de variables:** el stack lee `.env.docker` (ignorado por git), no `.env`. Créalo con `cp .env.docker.example .env.docker` y ejecuta todos los comandos de esta guía como `docker compose --env-file .env.docker ...` (por ejemplo `docker compose --env-file .env.docker up -d --build`). Antes del build hay que compilar el frontend con `npm run build`, porque el `Dockerfile` copia `public/build`.
+
 ## Requisitos en el servidor
 
 - Docker Engine 24+ y Docker Compose v2

@@ -7,6 +7,7 @@
         "dev": "vite",
         "test": "vite build",
         "test:js": "vitest run",
+        "e2e": "powershell -ExecutionPolicy Bypass -File cypress/ejecutar-e2e.ps1",
         "cobertura:js": "vitest run --coverage && node tests/herramientas/normalizar-cobertura.mjs"
     },
     "devDependencies": {

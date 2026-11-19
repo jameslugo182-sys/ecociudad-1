@@ -1,0 +1,11 @@
+# syntax=docker/dockerfile:1
+# Imagen de PostgreSQL con la base de datos de EcoCiudad ya cargada (estructura + datos).
+# El volcado se genera con docker/azure/exportar-bd.ps1 y NO se versiona (contiene datos personales):
+#   docker/backup/ecociudad_completo.sql
+# Solo se carga la primera vez que arranca con un directorio de datos vacío.
+FROM postgres:16-alpine
+
+COPY docker/backup/ecociudad_completo.sql /docker-entrypoint-initdb.d/01-ecociudad.sql
+
+# POSTGRES_DB, POSTGRES_USER y POSTGRES_PASSWORD se definen al ejecutar el contenedor.
+EXPOSE 5432

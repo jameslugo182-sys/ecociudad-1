@@ -50,7 +50,7 @@ Entrada Vite: `resources/js/app.jsx`. Páginas: `resources/js/Pages/**/*.jsx`.
 | Axios hacia `/api/…` como contrato de UI | Los controladores del panel devuelven Inertia o redirects |
 | Repos `frontend` + `backend` | Un clone, un deploy |
 | Redis obligatorio | Sesión, caché y cola ya van en PostgreSQL |
-| Cypress / Playwright | Hoy la red de seguridad es PHPUnit |
+| Cypress (E2E) | 13 escenarios en `cypress/`; se ejecutan con `npm run e2e` (instalar antes con `npm install --no-save cypress` y `npx cypress install`) |
 | FullCalendar (npm) | El cronograma es CSS propio (`.cronograma-fc`) + helpers en `horarioRuta.js` |
 | TypeScript | El JS/JSX actual es JavaScript |
 | Docker Compose para el día a día en Windows | XAMPP + Vite; Docker es para el servidor |
