@@ -71,7 +71,7 @@ if [ "$(id -u)" = "0" ]; then
     chown -R www-data:www-data storage bootstrap/cache
 fi
 
-if [ "$(id -u)" = "0" ] && [ "${1:-}" != "php-fpm" ]; then
+if [ "$(id -u)" = "0" ] && [ "${1:-}" != "php-fpm" ] && [ "${1:-}" != "supervisord" ]; then
     exec su-exec www-data "$@"
 fi
 
